@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, Trash2, FolderOpen } from "lucide-react";
 import { SavedApplication } from "@/types/profile";
 import { useT } from "@/lib/i18n";
+import { StipendiaIllustration } from "@/components/visual/StipendiaIllustration";
 
 export default function Drafts() {
   const t = useT();
@@ -21,22 +22,24 @@ export default function Drafts() {
   const sorted = [...drafts].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
   return (
-    <AppScreen title={t("draft.pageTitle")}>
+    <AppScreen title={t("draft.pageTitle")} subtitle={t("draft.pageSubtitle")}>
       <div className="bg-card rounded-3xl border border-border/60 shadow-soft p-3">
         {sorted.length === 0 ? (
-          <div className="px-2 py-10 text-center">
-            <div className="mx-auto h-12 w-12 rounded-2xl bg-accent-soft text-accent-foreground flex items-center justify-center mb-2">
+          <div className="px-1 py-2 text-center">
+            <StipendiaIllustration variant="drafts" className="mb-4" />
+            <div className="mx-auto h-12 w-12 rounded-2xl bg-primary-soft text-primary flex items-center justify-center mb-2">
               <FolderOpen className="h-6 w-6" />
             </div>
-            <p className="text-sm text-muted-foreground">{t("draft.pageEmpty")}</p>
-            <Button asChild variant="outline" className="mt-3 rounded-xl">
+            <h2 className="text-base font-semibold">{t("draft.emptyTitle")}</h2>
+            <p className="mx-auto mt-1 max-w-[18rem] text-sm text-muted-foreground leading-relaxed">{t("draft.pageEmpty")}</p>
+            <Button asChild variant="outline" className="mt-4 rounded-xl h-11">
               <Link to="/stipendier">{t("sch.title")}</Link>
             </Button>
           </div>
         ) : (
           <ul className="divide-y divide-border/60">
             {sorted.map((d) => (
-              <li key={d.scholarshipId} className="px-1 py-2.5">
+              <li key={d.scholarshipId} className="px-1 py-3">
                 <div className="flex items-start gap-2">
                   <div className="h-10 w-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center shrink-0">
                     <FileText className="h-4 w-4" />

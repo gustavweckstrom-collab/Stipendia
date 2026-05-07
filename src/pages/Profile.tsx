@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowRight, CheckCircle2, Shield, Upload, FileText, X, Pencil, FilePlus2, User, GraduationCap, Heart, FolderOpen } from "lucide-react";
+import { ArrowRight, CheckCircle2, Shield, Upload, FileText, X, Pencil, FilePlus2, User, FolderOpen, Settings } from "lucide-react";
 import { SearchableCombobox } from "@/components/ui/SearchableCombobox";
 import {
   EMPTY_PROFILE,
@@ -27,10 +27,10 @@ import {
 } from "@/types/profile";
 import { loadProfile, saveProfile } from "@/lib/storage";
 import { validateName } from "@/lib/validation";
-import { useT } from "@/lib/i18n";
+import { useOptionLabel, useT } from "@/lib/i18n";
 import { toast } from "sonner";
 
-const STEPS = ["Om dig", "Studier", "Engagemang", "Dokument"];
+const STEP_COUNT = 4;
 
 export default function Profile() {
   const t = useT();
@@ -66,38 +66,56 @@ export default function Profile() {
 
 function ProfileSummary({ profile, onEdit, onEditDocs }: { profile: StudentProfile; onEdit: () => void; onEditDocs: () => void }) {
   const t = useT();
+  const navigate = useNavigate();
+  const optionLabel = useOptionLabel();
   const purposeLabel = SYFTE_OPTIONS.find((o) => o.value === profile.syfte)?.value ?? profile.syfte;
   const rows: { label: string; value: string }[] = [
     { label: t("profile.firstName"), value: profile.firstName },
     { label: t("profile.lastName"), value: profile.lastName },
-    { label: t("profile.gender"), value: profile.kon },
+    { label: t("profile.gender"), value: optionLabel(profile.kon) },
     { label: t("profile.homeTown"), value: profile.hemort },
     { label: t("profile.university"), value: profile.universitet },
     { label: t("profile.studyCity"), value: profile.studieort },
-    { label: t("profile.field"), value: profile.amnesomrade },
-    { label: t("profile.term"), value: profile.termin },
-    { label: t("profile.purpose"), value: purposeLabel ?? "" },
-    { label: t("profile.economy"), value: profile.ekonomi },
+    { label: t("profile.field"), value: optionLabel(profile.amnesomrade) },
+    { label: t("profile.term"), value: optionLabel(profile.termin) },
+    { label: t("profile.purpose"), value: optionLabel(purposeLabel ?? "") },
+    { label: t("profile.economy"), value: optionLabel(profile.ekonomi) },
   ];
   const uploads = profile.uploads ?? [];
 
   return (
-    <AppScreen title={t("profile.summary")}>
-      <div className="space-y-3">
-        <div className="rounded-3xl bg-warm-gradient text-primary-foreground p-4 shadow-glow">
+    <AppScreen
+      title={t("profile.summary")}
+      subtitle={t("profile.aiSummary")}
+      right={
+        <button onClick={() => navigate("/installningar")} className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-secondary text-foreground" aria-label={t("settings.title")}>
+          <Settings className="h-5 w-5" />
+        </button>
+      }
+    >
+      <div className="space-y-5">
+        <div className="rounded-3xl border border-primary/15 bg-primary-soft/55 p-4 shadow-soft">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-white/15 flex items-center justify-center"><User className="h-6 w-6" /></div>
+            <div className="h-12 w-12 rounded-2xl bg-white text-primary flex items-center justify-center shadow-soft"><User className="h-6 w-6" /></div>
             <div className="min-w-0">
-              <p className="text-[11px] uppercase tracking-wider opacity-80 font-semibold">{t("profile.summary")}</p>
+              <p className="text-[11px] uppercase tracking-wider text-primary font-semibold">{t("profile.summary")}</p>
               <p className="font-bold text-lg leading-tight">{profile.firstName} {profile.lastName}</p>
+              <p className="mt-1 text-[12px] text-muted-foreground leading-snug">{t("profile.privacyNote")}</p>
             </div>
           </div>
         </div>
 
-        <section className="bg-card rounded-3xl border border-border/60 shadow-soft p-3">
+        <div className="rounded-2xl bg-card border border-border/60 p-4 text-[12px] text-foreground/80 leading-relaxed shadow-soft">
+          <div className="flex items-start gap-2">
+            <Shield className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <p>{t("profile.aiInfo")}</p>
+          </div>
+        </div>
+
+        <section className="bg-card rounded-3xl border border-border/60 shadow-soft p-4">
           <ul className="divide-y divide-border/60">
             {rows.map((r) => (
-              <li key={r.label} className="flex items-start justify-between gap-3 px-2 py-2.5">
+              <li key={r.label} className="flex items-start justify-between gap-3 px-1 py-3">
                 <span className="text-[12px] font-medium text-muted-foreground">{r.label}</span>
                 <span className="text-sm text-right max-w-[60%]">{r.value || <em className="text-muted-foreground/70 not-italic">{t("profile.notSet")}</em>}</span>
               </li>
@@ -105,7 +123,7 @@ function ProfileSummary({ profile, onEdit, onEditDocs }: { profile: StudentProfi
           </ul>
         </section>
 
-        <section className="bg-card rounded-3xl border border-border/60 shadow-soft p-3">
+        <section className="bg-card rounded-3xl border border-border/60 shadow-soft p-4">
           <h2 className="font-semibold text-sm flex items-center gap-1.5 px-1.5 pt-0.5 pb-2">
             <FolderOpen className="h-4 w-4 text-primary" /> {t("profile.docs")}
           </h2>
@@ -114,7 +132,7 @@ function ProfileSummary({ profile, onEdit, onEditDocs }: { profile: StudentProfi
           ) : (
             <ul className="space-y-1">
               {uploads.map((u) => {
-                const label = DOC_TYPES.find((d) => d.k === u.documentType)?.label ?? u.documentType;
+                const label = optionLabel(DOC_TYPES.find((d) => d.k === u.documentType)?.label ?? u.documentType);
                 return (
                   <li key={u.documentType} className="flex items-start gap-2 p-2.5 rounded-xl bg-secondary/40">
                     <FileText className="h-4 w-4 text-primary mt-0.5 shrink-0" />
@@ -144,6 +162,8 @@ function ProfileSummary({ profile, onEdit, onEditDocs }: { profile: StudentProfi
 
 function ProfileWizard({ initial, initialStep, onCancel, onSaved }: { initial: StudentProfile; initialStep: number; onCancel: () => void; onSaved: () => void }) {
   const t = useT();
+  const navigate = useNavigate();
+  const optionLabel = useOptionLabel();
   const [step, setStep] = useState(initialStep);
   const [profile, setProfile] = useState<StudentProfile>(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -186,7 +206,7 @@ function ProfileWizard({ initial, initialStep, onCancel, onSaved }: { initial: S
       toast.error(t("profile.fixFields"));
       return;
     }
-    if (step === STEPS.length - 1) {
+    if (step === STEP_COUNT - 1) {
       saveProfile(profile);
       toast.success(t("profile.savedToast"));
       onSaved();
@@ -195,26 +215,35 @@ function ProfileWizard({ initial, initialStep, onCancel, onSaved }: { initial: S
     }
   };
 
-  const progress = ((step + 1) / STEPS.length) * 100;
+  const progress = ((step + 1) / STEP_COUNT) * 100;
+  const stepLabels = [t("profile.step.about"), t("profile.step.studies"), t("profile.step.context"), t("profile.step.docs")];
 
   return (
     <AppScreen
       title={t("profile.create")}
-      subtitle={`${step + 1} / ${STEPS.length} · ${STEPS[step]}`}
+      subtitle={`${step + 1} / ${STEP_COUNT} - ${stepLabels[step]}`}
       back={step > 0}
       right={
-        <button onClick={onCancel} className="text-xs font-semibold text-muted-foreground px-2 py-1">
-          {t("common.cancel")}
-        </button>
+        <div className="flex items-center gap-1">
+          <button onClick={() => navigate("/installningar")} className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-secondary text-foreground" aria-label={t("settings.title")}>
+            <Settings className="h-5 w-5" />
+          </button>
+          <button onClick={onCancel} className="text-xs font-semibold text-muted-foreground px-2 py-1">
+            {t("common.cancel")}
+          </button>
+        </div>
       }
     >
-      <div className="space-y-5">
+      <div className="space-y-6">
         <Progress value={progress} className="h-1.5" />
-        <div className="rounded-2xl bg-primary-soft/70 border border-primary/15 p-3 text-[12px] text-foreground/80 leading-relaxed">
-          {t("profile.aiInfo")}
+        <div className="rounded-2xl bg-card border border-border/60 p-4 text-[12px] text-foreground/80 leading-relaxed shadow-soft">
+          <div className="flex items-start gap-2">
+            <Shield className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <p>{t("profile.aiInfo")}</p>
+          </div>
         </div>
 
-        <div className="space-y-3.5">
+        <div className="space-y-5">
           {step === 0 && (
             <>
               <div className="grid grid-cols-2 gap-2">
@@ -233,7 +262,7 @@ function ProfileWizard({ initial, initialStep, onCancel, onSaved }: { initial: S
                       profile.kon === opt ? "border-primary bg-primary-soft" : "border-border bg-secondary/40 hover:bg-secondary"
                     }`}>
                       <RadioGroupItem value={opt} />
-                      <span className="text-sm font-medium">{opt}</span>
+                      <span className="text-sm font-medium">{optionLabel(opt)}</span>
                     </label>
                   ))}
                 </RadioGroup>
@@ -253,30 +282,30 @@ function ProfileWizard({ initial, initialStep, onCancel, onSaved }: { initial: S
           {step === 1 && (
             <>
               <Field label={`${t("profile.university")} *`} error={errors.universitet}>
-                <SearchableCombobox value={profile.universitet} onChange={(v) => update("universitet", v)} options={UNIVERSITET_OPTIONS} placeholder="Sök eller skriv din högskola" />
+                <SearchableCombobox value={profile.universitet} onChange={(v) => update("universitet", v)} options={UNIVERSITET_OPTIONS} placeholder={t("profile.uniPh")} />
               </Field>
               <Field label={`${t("profile.program")} *`} error={errors.program}>
-                <Input value={profile.program} onChange={(e) => update("program", e.target.value)} placeholder="t.ex. Civilingenjör Datateknik" />
+                <Input value={profile.program} onChange={(e) => update("program", e.target.value)} placeholder={t("profile.programPh")} />
               </Field>
               <Field label={`${t("profile.field")} *`} error={errors.amnesomrade}>
                 <Select value={profile.amnesomrade} onValueChange={(v) => update("amnesomrade", v)}>
-                  <SelectTrigger><SelectValue placeholder="Välj" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("profile.selectPh")} /></SelectTrigger>
                   <SelectContent>
-                    {AMNESOMRADE_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                    {AMNESOMRADE_OPTIONS.map((o) => <SelectItem key={o} value={o}>{optionLabel(o)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label={t("profile.term")}>
                   <Select value={profile.termin} onValueChange={(v) => update("termin", v)}>
-                    <SelectTrigger><SelectValue placeholder="Välj" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("profile.selectPh")} /></SelectTrigger>
                     <SelectContent>
-                      {TERMIN_OPTIONS.map((tt) => <SelectItem key={tt} value={tt}>{tt}</SelectItem>)}
+                      {TERMIN_OPTIONS.map((tt) => <SelectItem key={tt} value={tt}>{optionLabel(tt)}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </Field>
                 <Field label={`${t("profile.studyCity")} *`} error={errors.studieort}>
-                  <SearchableCombobox value={profile.studieort} onChange={(v) => update("studieort", v)} options={STUDIEORT_OPTIONS} placeholder="Sök eller skriv" />
+                  <SearchableCombobox value={profile.studieort} onChange={(v) => update("studieort", v)} options={STUDIEORT_OPTIONS} placeholder={t("profile.studyCityPh")} />
                 </Field>
               </div>
             </>
@@ -285,24 +314,24 @@ function ProfileWizard({ initial, initialStep, onCancel, onSaved }: { initial: S
           {step === 2 && (
             <>
               <Field label={t("profile.engagement")}>
-                <Textarea rows={3} value={profile.engagemang} onChange={(e) => update("engagemang", e.target.value)} placeholder="t.ex. Styrelsemedlem i kårsektion" />
+                <Textarea rows={3} value={profile.engagemang} onChange={(e) => update("engagemang", e.target.value)} placeholder={t("profile.engagementPh")} />
               </Field>
               <Field label={t("profile.interests")}>
-                <Textarea rows={2} value={profile.intressen} onChange={(e) => update("intressen", e.target.value)} placeholder="t.ex. AI, hållbarhet" />
+                <Textarea rows={2} value={profile.intressen} onChange={(e) => update("intressen", e.target.value)} placeholder={t("profile.interestsPh")} />
               </Field>
               <Field label={`${t("profile.purpose")} *`} error={errors.syfte} hint={t("profile.purposeHint")}>
                 <Select value={profile.syfte} onValueChange={(v) => update("syfte", v)}>
-                  <SelectTrigger><SelectValue placeholder="Välj alternativ" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("profile.selectOptionPh")} /></SelectTrigger>
                   <SelectContent>
-                    {SYFTE_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.value}</SelectItem>)}
+                    {SYFTE_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{optionLabel(o.value)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </Field>
               <Field label={t("profile.economy")}>
                 <Select value={profile.ekonomi} onValueChange={(v) => update("ekonomi", v)}>
-                  <SelectTrigger><SelectValue placeholder="Välj alternativ" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("profile.selectOptionPh")} /></SelectTrigger>
                   <SelectContent>
-                    {EKONOMI_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                    {EKONOMI_OPTIONS.map((o) => <SelectItem key={o} value={o}>{optionLabel(o)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </Field>
@@ -322,7 +351,7 @@ function ProfileWizard({ initial, initialStep, onCancel, onSaved }: { initial: S
                 {DOC_TYPES.map(({ k, label }) => (
                   <DocUploadRow
                     key={k}
-                    label={label}
+                    label={optionLabel(label)}
                     docType={k}
                     uploads={profile.uploads ?? []}
                     onAdd={(u) => update("uploads", [...(profile.uploads ?? []).filter((x) => x.documentType !== u.documentType), u])}
@@ -338,12 +367,12 @@ function ProfileWizard({ initial, initialStep, onCancel, onSaved }: { initial: S
           )}
         </div>
 
-        <div className="flex gap-2 pt-2 sticky bottom-0">
+        <div className="sticky bottom-0 flex gap-2 border-t border-border/60 bg-app/95 pt-3 pb-1 backdrop-blur-md">
           {step > 0 && (
             <Button variant="outline" onClick={() => setStep((s) => s - 1)} className="rounded-xl flex-1">{t("common.back")}</Button>
           )}
           <Button onClick={next} className="rounded-xl flex-1 shadow-glow">
-            {step === STEPS.length - 1 ? (
+            {step === STEP_COUNT - 1 ? (
               <><CheckCircle2 className="mr-1 h-4 w-4" /> {t("profile.saveAndMatch")}</>
             ) : (
               <>{t("common.next")} <ArrowRight className="ml-1 h-4 w-4" /></>
@@ -357,7 +386,7 @@ function ProfileWizard({ initial, initialStep, onCancel, onSaved }: { initial: S
 
 function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <Label className="text-xs font-semibold text-foreground/80">{label}</Label>
       {children}
       {hint && !error && <p className="text-[11px] text-muted-foreground">{hint}</p>}
@@ -370,17 +399,18 @@ function DocUploadRow({ label, docType, uploads, onAdd, onRemove }: {
   label: string; docType: string; uploads: DocumentUpload[];
   onAdd: (u: DocumentUpload) => void; onRemove: (type: string) => void;
 }) {
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const existing = uploads.find((u) => u.documentType === docType);
 
   const handleFile = (file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase();
     if (!ext || !["pdf", "doc", "docx"].includes(ext)) {
-      toast.error("Filtypen stöds inte. Använd PDF, DOC eller DOCX.");
+      toast.error(t("profile.fileUnsupported"));
       return;
     }
     onAdd({ documentType: docType, fileName: file.name, uploadDate: new Date().toISOString() });
-    toast.success(`${label} tillagt`);
+    toast.success(t("profile.docAdded", { name: label }));
   };
 
   return (
@@ -392,11 +422,11 @@ function DocUploadRow({ label, docType, uploads, onAdd, onRemove }: {
         </div>
         {!existing ? (
           <Button type="button" size="sm" variant="outline" className="rounded-xl h-8" onClick={() => inputRef.current?.click()}>
-            <Upload className="h-3.5 w-3.5 mr-1" /> Ladda upp
+            <Upload className="h-3.5 w-3.5 mr-1" /> {t("profile.upload")}
           </Button>
         ) : (
           <Button type="button" size="sm" variant="ghost" className="rounded-xl h-8 text-destructive hover:text-destructive" onClick={() => onRemove(docType)}>
-            <X className="h-3.5 w-3.5 mr-1" /> Ta bort
+            <X className="h-3.5 w-3.5 mr-1" /> {t("profile.remove")}
           </Button>
         )}
         <input ref={inputRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={(e) => {
@@ -406,9 +436,9 @@ function DocUploadRow({ label, docType, uploads, onAdd, onRemove }: {
       {existing && (
         <div className="mt-2 flex items-center justify-between gap-2">
           <p className="text-[11px] text-muted-foreground truncate">
-            {existing.fileName} · {new Date(existing.uploadDate).toLocaleDateString()}
+            {existing.fileName} - {new Date(existing.uploadDate).toLocaleDateString()}
           </p>
-          <span className="text-[10px] font-semibold text-primary bg-primary-soft px-2 py-0.5 rounded-full shrink-0">Tillagd</span>
+          <span className="text-[10px] font-semibold text-primary bg-primary-soft px-2 py-0.5 rounded-full shrink-0">{t("profile.added")}</span>
         </div>
       )}
     </div>

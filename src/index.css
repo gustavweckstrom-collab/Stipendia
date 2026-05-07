@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    /* Fresh white & green + soft pink accent */
+    /* Fresh white, calm green and neutral sage accents */
     --background: 0 0% 98%;
     --foreground: 152 30% 12%;
 
@@ -35,11 +35,9 @@
     --muted: 145 25% 95%;
     --muted-foreground: 152 8% 42%;
 
-    /* Accent pink #F7C6D9 -> hsl(338 70% 88%) */
-    --accent: 338 70% 78%;
-    --accent-foreground: 340 40% 22%;
-    /* Light pink #FCEEF4 -> hsl(335 69% 96%) */
-    --accent-soft: 335 69% 96%;
+    --accent: 145 18% 90%;
+    --accent-foreground: 152 30% 18%;
+    --accent-soft: 145 26% 95%;
 
     --success: 146 60% 38%;
     --success-foreground: 0 0% 100%;
@@ -64,7 +62,8 @@
     --shadow-soft: 0 1px 2px hsl(150 30% 15% / 0.04), 0 4px 16px hsl(150 30% 20% / 0.06);
     --shadow-card: 0 1px 3px hsl(150 30% 15% / 0.05), 0 8px 24px hsl(150 30% 20% / 0.08);
     --shadow-phone: 0 30px 80px -20px hsl(150 30% 15% / 0.25), 0 10px 30px -10px hsl(150 30% 15% / 0.15);
-    --shadow-glow: 0 8px 24px hsl(var(--primary) / 0.30);
+    --shadow-glow: 0 8px 22px hsl(var(--primary) / 0.18);
+    --shadow-lift: 0 1px 2px hsl(150 30% 15% / 0.04), 0 10px 28px hsl(150 30% 20% / 0.08);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -95,6 +94,7 @@
   .shadow-card { box-shadow: var(--shadow-card); }
   .shadow-phone { box-shadow: var(--shadow-phone); }
   .shadow-glow { box-shadow: var(--shadow-glow); }
+  .shadow-lift { box-shadow: var(--shadow-lift); }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { scrollbar-width: none; }
 }

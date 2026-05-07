@@ -9,9 +9,10 @@ interface Props {
   options: readonly string[];
   placeholder?: string;
   maxResults?: number;
+  getOptionLabel?: (option: string) => string;
 }
 
-export function SearchableCombobox({ value, onChange, options, placeholder, maxResults = 8 }: Props) {
+export function SearchableCombobox({ value, onChange, options, placeholder, maxResults = 8, getOptionLabel }: Props) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -25,7 +26,7 @@ export function SearchableCombobox({ value, onChange, options, placeholder, maxR
 
   const q = value.trim().toLowerCase();
   const filtered = (q
-    ? options.filter((o) => o.toLowerCase().includes(q))
+    ? options.filter((o) => `${o} ${getOptionLabel?.(o) ?? ""}`.toLowerCase().includes(q))
     : options
   ).slice(0, maxResults);
 
@@ -57,7 +58,7 @@ export function SearchableCombobox({ value, onChange, options, placeholder, maxR
                 value === o && "bg-secondary"
               )}
             >
-              <span className="truncate">{o}</span>
+              <span className="truncate">{getOptionLabel?.(o) ?? o}</span>
               {value === o && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
             </button>
           ))}

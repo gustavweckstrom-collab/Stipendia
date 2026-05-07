@@ -7,21 +7,21 @@ describe("profile storage", () => {
     localStorage.clear();
   });
 
-  it("keeps Studieintyg as an uploadable document type", () => {
-    expect(DOC_TYPES.some((doc) => doc.k === "studieintyg" && doc.label === "Studieintyg")).toBe(true);
+  it("keeps profile document uploads focused on draft-writing documents", () => {
+    expect(DOC_TYPES.map((doc) => doc.k)).toEqual(["cv", "personligtBrev", "rekommendationsbrev", "andra"]);
   });
 
-  it("migrates legacy document flags into uploads", () => {
+  it("migrates only supported legacy document flags into uploads", () => {
     localStorage.setItem("stipendia.profile", JSON.stringify({
       ...EMPTY_PROFILE,
-      dokument: { studieintyg: true, cv: true },
-      uploads: [],
+      dokument: { cv: true },
+      uploads: [{ documentType: "legacyUnsupported", fileName: "old.pdf", uploadDate: new Date().toISOString() }],
     }));
 
     const loaded = loadProfile();
 
     expect(loaded?.uploads?.map((upload) => upload.documentType)).toEqual(
-      expect.arrayContaining(["studieintyg", "cv"])
+      ["cv"]
     );
   });
 });

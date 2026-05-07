@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Home, User, Search, Sparkles, Bookmark } from "lucide-react";
+import { Home, User, Search, ShieldCheck, Bookmark, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 
@@ -8,8 +8,9 @@ export default function BottomTabs() {
   const TABS = [
     { to: "/", label: t("nav.home"), icon: Home, end: true },
     { to: "/stipendier", label: t("nav.scholarships"), icon: Search },
-    { to: "/matchningar", label: t("nav.matches"), icon: Sparkles },
+    { to: "/matchningar", label: t("nav.matches"), icon: ShieldCheck },
     { to: "/sparade", label: t("nav.saved"), icon: Bookmark },
+    { to: "/utkast", label: t("nav.drafts"), icon: FileText },
     { to: "/profil", label: t("nav.profile"), icon: User },
   ];
   return (
@@ -23,10 +24,10 @@ export default function BottomTabs() {
             )}>
               {({ isActive }) => (
                 <>
-                  <span className={cn("flex h-7 w-11 max-w-full items-center justify-center rounded-full transition-all", isActive && "bg-primary-soft")}>
-                    <Icon className="h-[18px] w-[18px]" strokeWidth={isActive ? 2.4 : 2} />
+                  <span className={cn("flex h-7 w-10 max-w-full items-center justify-center rounded-full transition-all", isActive && "bg-primary-soft")}>
+                    <Icon className="h-[17px] w-[17px]" strokeWidth={isActive ? 2.4 : 2} />
                   </span>
-                  <span className="max-w-full truncate text-[9.5px] font-medium leading-none sm:text-[10px]">{label}</span>
+                  <span className="max-w-full truncate text-[8.8px] font-medium leading-none sm:text-[10px]">{label}</span>
                 </>
               )}
             </NavLink>

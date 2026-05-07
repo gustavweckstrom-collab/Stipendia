@@ -1,6 +1,7 @@
 import { Scholarship } from "@/data/scholarships";
 import { StudentProfile, SYFTE_OPTIONS } from "@/types/profile";
 import { ScholarshipType } from "@/types/profile";
+import { getLang } from "./i18n";
 
 const norm = (s: string) => s.trim().toLowerCase();
 const hasOverlap = (val: string, list: string[]) =>
@@ -20,6 +21,7 @@ export interface EligibilityResult {
 }
 
 export function checkEligibility(profile: StudentProfile, s: Scholarship): EligibilityResult {
+  const en = getLang() === "en";
   const reasons: string[] = [];
   const blockers: string[] = [];
 
@@ -28,61 +30,61 @@ export function checkEligibility(profile: StudentProfile, s: Scholarship): Eligi
   const locations = s.eligibleLocations ?? [];
 
   if (universities.length === 0) {
-    reasons.push("Öppet för alla lärosäten");
+    reasons.push(en ? "Open to all universities" : "Öppet för alla lärosäten");
   } else if (profile.universitet && hasOverlap(profile.universitet, universities)) {
-    reasons.push(`Ditt lärosäte (${profile.universitet}) är behörigt`);
+    reasons.push(en ? `Your university (${profile.universitet}) appears eligible` : `Ditt lärosäte (${profile.universitet}) är behörigt`);
   } else {
-    blockers.push(`Endast för: ${universities.join(", ")}`);
+    blockers.push(en ? `Only for: ${universities.join(", ")}` : `Endast för: ${universities.join(", ")}`);
   }
 
   if (fields.length === 0) {
-    reasons.push("Öppet för alla ämnesområden");
+    reasons.push(en ? "Open to all study fields" : "Öppet för alla ämnesområden");
   } else if (
     (profile.amnesomrade && hasOverlap(profile.amnesomrade, fields)) ||
     (profile.program && hasOverlap(profile.program, fields))
   ) {
-    reasons.push(`Ditt ämnesområde matchar (${fields.join(", ")})`);
+    reasons.push(en ? `Your study field appears to fit (${fields.join(", ")})` : `Ditt ämnesområde matchar (${fields.join(", ")})`);
   } else {
-    blockers.push(`Riktar sig till: ${fields.join(", ")}`);
+    blockers.push(en ? `Intended for: ${fields.join(", ")}` : `Riktar sig till: ${fields.join(", ")}`);
   }
 
   if (locations.length === 0) {
-    reasons.push("Inga geografiska krav");
+    reasons.push(en ? "No geographic requirements found" : "Inga geografiska krav");
   } else if (
     (profile.studieort && hasOverlap(profile.studieort, locations)) ||
     (profile.hemort && hasOverlap(profile.hemort, locations))
   ) {
-    reasons.push(`Studieort matchar (${locations.join(", ")})`);
+    reasons.push(en ? `Study location appears to fit (${locations.join(", ")})` : `Studieort matchar (${locations.join(", ")})`);
   } else {
-    blockers.push(`Studieort bör vara: ${locations.join(", ")}`);
+    blockers.push(en ? `Study location should be: ${locations.join(", ")}` : `Studieort bör vara: ${locations.join(", ")}`);
   }
 
   if (s.needBased) {
     if (hasEconomicNeed(profile)) {
-      reasons.push("Din ekonomiska situation matchar behovsprövade stipendier");
+      reasons.push(en ? "Your financial situation appears to fit need-based scholarships" : "Din ekonomiska situation matchar behovsprövade stipendier");
     } else {
-      blockers.push("Stipendiet är behovsprövat och kräver begränsad ekonomi");
+      blockers.push(en ? "The scholarship is need-based and requires limited finances" : "Stipendiet är behovsprövat och kräver begränsad ekonomi");
     }
   }
 
   if (s.engagementRequired) {
     if (profile.engagemang.trim().length > 0) {
-      reasons.push("Du har angett föreningsengagemang eller ideellt arbete");
+      reasons.push(en ? "You have added association involvement or volunteer work" : "Du har angett föreningsengagemang eller ideellt arbete");
     } else {
-      blockers.push("Stipendiet kräver föreningsengagemang eller ideellt arbete");
+      blockers.push(en ? "The scholarship requires association involvement or volunteer work" : "Stipendiet kräver föreningsengagemang eller ideellt arbete");
     }
   }
 
   if (criteriaText(s).includes("identifierar sig som kvinna")) {
     if (profile.kon === "Kvinna") {
-      reasons.push("Du matchar stipendiets könskriterium");
+      reasons.push(en ? "You appear to fit the scholarship's gender criterion" : "Du matchar stipendiets könskriterium");
     } else {
-      blockers.push("Stipendiet riktar sig till sökande som identifierar sig som kvinna");
+      blockers.push(en ? "The scholarship is intended for applicants who identify as women" : "Stipendiet riktar sig till sökande som identifierar sig som kvinna");
     }
   }
 
   if (s.purposes && s.purposes.length > 0 && purposeTags(profile).some((tag) => hasOverlap(tag, s.purposes ?? []))) {
-    reasons.push("Ditt syfte med stipendiet matchar ändamålet");
+    reasons.push(en ? "Your stated purpose appears to fit the foundation's purpose" : "Ditt syfte med stipendiet matchar ändamålet");
   }
 
   return { eligible: blockers.length === 0, reasons, blockers };
@@ -106,12 +108,3 @@ export function scholarshipTypes(s: Scholarship): ScholarshipType[] {
   return Array.from(set);
 }
 
-export type DeadlineState = "open-not-applied" | "open-applied" | "closed" | "unknown";
-
-export function deadlineState(s: Scholarship, applied: boolean): DeadlineState {
-  if (!s.deadline) return "unknown";
-  const now = Date.now();
-  const open = new Date(s.deadline).getTime() >= now;
-  if (!open) return "closed";
-  return applied ? "open-applied" : "open-not-applied";
-}

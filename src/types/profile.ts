@@ -22,10 +22,10 @@ export interface StudentProfile {
   syfte: string;
   syfteAnnan?: string;
   dokument?: {
-    studieintyg?: boolean;
     cv?: boolean;
     personligtBrev?: boolean;
     rekommendationsbrev?: boolean;
+    andra?: boolean;
   };
   uploads?: DocumentUpload[];
 }
@@ -46,11 +46,11 @@ export const EMPTY_PROFILE: StudentProfile = {
   intressen: "",
   syfte: "",
   syfteAnnan: "",
-  dokument: { studieintyg: false, cv: false, personligtBrev: false, rekommendationsbrev: false },
+  dokument: { cv: false, personligtBrev: false, rekommendationsbrev: false, andra: false },
   uploads: [],
 };
 
-export type ApplicationStatus = "utkast" | "paborjad" | "skickad" | "arkiverad";
+export type ApplicationStatus = "utkast";
 
 export interface SavedApplication {
   scholarshipId: string;
@@ -160,7 +160,6 @@ export const EKONOMI_OPTIONS = [
 ] as const;
 
 export const DOC_TYPES = [
-  { k: "studieintyg", label: "Studieintyg" },
   { k: "cv", label: "CV" },
   { k: "personligtBrev", label: "Personligt brev" },
   { k: "rekommendationsbrev", label: "Rekommendationsbrev" },

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import AppScreen from "@/components/layout/AppScreen";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Bell, Languages, Database, Trash2, RotateCcw } from "lucide-react";
+import { Bell, Languages, Database, Trash2, RotateCcw, Bookmark, FileText, Info, Shield } from "lucide-react";
 import { getLang, setLang, useT, Lang } from "@/lib/i18n";
 import { clearAll, clearProfile } from "@/lib/storage";
 import { toast } from "sonner";
@@ -14,15 +14,19 @@ import {
 
 const NOTIF_KEY = "stipendia.notifs";
 
-interface Notifs { applicationReminders: boolean; matchUpdates: boolean }
-const defaultNotifs: Notifs = { applicationReminders: true, matchUpdates: false };
+interface Notifs { applicationReminders: boolean; savedReminders: boolean; draftReminders: boolean; matchUpdates: boolean }
+const defaultNotifs: Notifs = { applicationReminders: true, savedReminders: true, draftReminders: true, matchUpdates: false };
 
 function loadNotifs(): Notifs {
   try {
     const raw = localStorage.getItem(NOTIF_KEY);
     if (!raw) return defaultNotifs;
     const parsed = JSON.parse(raw);
-    return { ...defaultNotifs, ...parsed, applicationReminders: parsed.applicationReminders ?? parsed.deadlines ?? defaultNotifs.applicationReminders };
+    return {
+      ...defaultNotifs,
+      ...parsed,
+      applicationReminders: parsed.applicationReminders ?? defaultNotifs.applicationReminders,
+    };
   }
   catch { return defaultNotifs; }
 }
@@ -43,13 +47,19 @@ export default function SettingsPage() {
   const switchLang = (l: Lang) => { setLang(l); setLangLocal(l); };
 
   return (
-    <AppScreen title={t("settings.title")}>
-      <div className="space-y-3">
+    <AppScreen title={t("settings.title")} subtitle={t("settings.subtitle")}>
+      <div className="space-y-4">
         <Section icon={Bell} title={t("settings.notifications")}>
-          <Row label={t("settings.applicationReminders")}>
+          <Row icon={Bell} label={t("settings.applicationReminders")}>
             <Switch checked={notifs.applicationReminders} onCheckedChange={(v) => update("applicationReminders", v)} />
           </Row>
-          <Row label={t("settings.matchUpdates")} last>
+          <Row icon={Bookmark} label={t("settings.savedReminders")}>
+            <Switch checked={notifs.savedReminders} onCheckedChange={(v) => update("savedReminders", v)} />
+          </Row>
+          <Row icon={FileText} label={t("settings.draftReminders")}>
+            <Switch checked={notifs.draftReminders} onCheckedChange={(v) => update("draftReminders", v)} />
+          </Row>
+          <Row icon={Info} label={t("settings.matchUpdates")} last>
             <Switch checked={notifs.matchUpdates} onCheckedChange={(v) => update("matchUpdates", v)} />
           </Row>
         </Section>
@@ -67,6 +77,10 @@ export default function SettingsPage() {
 
         <Section icon={Database} title={t("settings.data")}>
           <div className="p-2 space-y-3">
+            <div className="flex items-start gap-2 rounded-2xl bg-secondary/50 border border-border/60 p-3">
+              <Shield className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <p className="text-xs leading-relaxed text-foreground/80">{t("settings.privacy")}</p>
+            </div>
             <DangerAction
               icon={RotateCcw}
               label={t("settings.resetProfile")}
@@ -87,7 +101,13 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        <p className="text-[10px] text-center text-muted-foreground/80 px-4 py-2">Stipendia MVP · v0.2</p>
+        <Section icon={Info} title={t("settings.appInfo")}>
+          <div className="px-2 py-2.5">
+            <p className="text-sm font-semibold">Stipendia</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("settings.appDesc")}</p>
+            <p className="mt-3 inline-flex rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">{t("settings.prototype")}</p>
+          </div>
+        </Section>
       </div>
     </AppScreen>
   );
@@ -104,10 +124,14 @@ function Section({ icon: Icon, title, children }: { icon: any; title: string; ch
   );
 }
 
-function Row({ label, children, last }: { label: string; children: React.ReactNode; last?: boolean }) {
+function Row({ icon: Icon, label, children, last }: { icon: any; label: string; children: React.ReactNode; last?: boolean }) {
   return (
-    <div className={cn("flex items-center justify-between px-2 py-2.5", !last && "border-b border-border/50")}>
-      <span className="text-sm">{label}</span>{children}
+    <div className={cn("flex items-center justify-between gap-3 px-2 py-3", !last && "border-b border-border/50")}>
+      <span className="min-w-0 flex items-center gap-2 text-sm">
+        <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+        <span>{label}</span>
+      </span>
+      {children}
     </div>
   );
 }

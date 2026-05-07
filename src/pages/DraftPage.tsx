@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Copy, RotateCw, Save, AlertTriangle, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
+import { StipendiaIllustration } from "@/components/visual/StipendiaIllustration";
 
 export default function DraftPage() {
   const t = useT();
@@ -70,10 +71,11 @@ export default function DraftPage() {
   if (!profile) {
     return (
       <AppScreen title={t("draft.title")} back>
-        <div className="text-center py-10">
-          <FileText className="h-10 w-10 text-muted-foreground mx-auto" />
+        <div className="rounded-[30px] border border-border/70 bg-card p-4 text-center shadow-soft">
+          <StipendiaIllustration variant="profile" className="mb-4" />
+          <FileText className="h-10 w-10 text-primary mx-auto" />
           <h2 className="mt-3 text-base font-semibold">{t("draft.profileFirst")}</h2>
-          <p className="mt-1 text-xs text-muted-foreground">{t("draft.profileFirstDesc")}</p>
+          <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{t("draft.profileFirstDesc")}</p>
           <Button asChild className="mt-4 rounded-xl"><Link to="/profil">{t("home.startProfile")}</Link></Button>
         </div>
       </AppScreen>
@@ -101,7 +103,7 @@ export default function DraftPage() {
 
   return (
     <AppScreen title={t("draft.title")} subtitle={scholarship.name} back>
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex items-start gap-2 rounded-2xl bg-warning/10 border border-warning/30 p-3">
           <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
           <p className="text-xs text-foreground/85 leading-relaxed">
@@ -109,11 +111,11 @@ export default function DraftPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl bg-card border border-border/60 p-3 shadow-soft">
+        <div className="rounded-3xl bg-card border border-border/60 p-3 shadow-soft">
           {loading ? (
             <div className="space-y-2 animate-pulse py-2">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-2.5 bg-secondary rounded" style={{ width: `${60 + Math.random() * 40}%` }} />
+              {[92, 76, 84, 68, 95, 72, 88, 64].map((width, i) => (
+                <div key={i} className="h-2.5 bg-secondary rounded" style={{ width: `${width}%` }} />
               ))}
             </div>
           ) : (

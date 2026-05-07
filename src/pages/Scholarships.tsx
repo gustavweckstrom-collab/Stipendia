@@ -5,23 +5,25 @@ import { loadFirstScholarshipChunk, loadScholarshipChunk } from "@/lib/scholarsh
 import AppScreen from "@/components/layout/AppScreen";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Building2, ChevronRight, SlidersHorizontal, Tag, X } from "lucide-react";
+import { Search, Building2, BookmarkCheck, ChevronRight, SlidersHorizontal, Tag, X, SearchX } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useT } from "@/lib/i18n";
+import { useOptionLabel, useT } from "@/lib/i18n";
 import { Switch } from "@/components/ui/switch";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter,
 } from "@/components/ui/sheet";
 import { SearchableCombobox } from "@/components/ui/SearchableCombobox";
-import { AMNESOMRADE_OPTIONS, SCHOLARSHIP_TYPES, ScholarshipType, UNIVERSITET_OPTIONS, STUDIEORT_OPTIONS } from "@/types/profile";
+import { AMNESOMRADE_OPTIONS, SCHOLARSHIP_TYPES, ScholarshipType, STUDIEORT_OPTIONS } from "@/types/profile";
 import { checkEligibility, scholarshipTypes } from "@/lib/eligibility";
-import { loadProfile } from "@/lib/storage";
-import { EligibilityBadge } from "@/components/StatusBadge";
+import { isApplied, loadProfile, loadSavedIds } from "@/lib/storage";
+import { ApplicationStateBadge, EligibilityBadge } from "@/components/StatusBadge";
+import { StipendiaIllustration } from "@/components/visual/StipendiaIllustration";
 
 const RESULT_STEP = 50;
 
 export default function Scholarships() {
   const t = useT();
+  const optionLabel = useOptionLabel();
   const [query, setQuery] = useState("");
   const [field, setField] = useState<string>("");
   const [uni, setUni] = useState<string>("");
@@ -109,7 +111,7 @@ export default function Scholarships() {
 
   const total = index?.total ?? items.length;
   const hasFilter = activeFilterCount > 0 || query.length > 0;
-  const subtitle = hasFilter
+  const countLabel = hasFilter
     ? t("sch.loadedFiltered", { n: filtered.length, l: items.length, t: total })
     : t("sch.loadedCount", { n: items.length, t: total });
   const visibleItems = filtered.slice(0, visibleCount);
@@ -117,7 +119,7 @@ export default function Scholarships() {
   const hasMoreChunks = Boolean(index && nextChunk < index.chunks.length);
 
   return (
-    <AppScreen title={t("sch.title")} subtitle={subtitle}>
+    <AppScreen title={t("sch.title")} subtitle={t("sch.subtitle")}>
       <div className="space-y-3">
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -139,10 +141,10 @@ export default function Scholarships() {
               </SheetHeader>
               <div className="space-y-5 py-4">
                 <FilterGroup label={t("sch.f.field")}>
-                  <ChipRow options={[{ id: "", label: "—" }, ...AMNESOMRADE_OPTIONS.map((o) => ({ id: o, label: o }))]} value={field} onChange={setField} />
+                  <ChipRow options={[{ id: "", label: t("sch.f.all") }, ...AMNESOMRADE_OPTIONS.map((o) => ({ id: o, label: optionLabel(o) }))]} value={field} onChange={setField} />
                 </FilterGroup>
                 <FilterGroup label={t("sch.f.university")}>
-                  <SearchableCombobox value={uni} onChange={setUni} options={UNIVERSITET_OPTIONS as unknown as string[]} placeholder={t("sch.f.university")} />
+                  <Input value={uni} onChange={(e) => setUni(e.target.value)} placeholder={t("sch.f.universityPh")} />
                 </FilterGroup>
                 <FilterGroup label={t("sch.f.location")}>
                   <SearchableCombobox value={loc} onChange={setLoc} options={STUDIEORT_OPTIONS as unknown as string[]} placeholder={t("sch.f.location")} />
@@ -155,7 +157,7 @@ export default function Scholarships() {
                         <button key={tp} onClick={() => setTypes((cur) => on ? cur.filter((x) => x !== tp) : [...cur, tp])} className={cn(
                           "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
                           on ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border hover:text-foreground"
-                        )}>{tp}</button>
+                        )}>{optionLabel(tp)}</button>
                       );
                     })}
                   </div>
@@ -174,13 +176,14 @@ export default function Scholarships() {
             </SheetContent>
           </Sheet>
         </div>
+        <p className="px-1 text-[11px] text-muted-foreground">{countLabel}</p>
 
         {activeFilterCount > 0 && (
           <div className="flex items-center gap-1.5 flex-wrap">
-            {field && <ActiveChip label={field} onRemove={() => setField("")} />}
+            {field && <ActiveChip label={optionLabel(field)} onRemove={() => setField("")} />}
             {uni && <ActiveChip label={uni} onRemove={() => setUni("")} />}
             {loc && <ActiveChip label={loc} onRemove={() => setLoc("")} />}
-            {types.map((tp) => <ActiveChip key={tp} label={tp} onRemove={() => setTypes((c) => c.filter((x) => x !== tp))} />)}
+            {types.map((tp) => <ActiveChip key={tp} label={optionLabel(tp)} onRemove={() => setTypes((c) => c.filter((x) => x !== tp))} />)}
             {eligibleOnly && <ActiveChip label={t("sch.eligible")} onRemove={() => setEligibleOnly(false)} />}
             <button onClick={resetFilters} className="text-[11px] font-semibold text-primary px-2 py-1">{t("sch.f.clear")}</button>
           </div>
@@ -189,11 +192,16 @@ export default function Scholarships() {
         {loading ? (
           <div className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">{t("sch.loading")}</div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-secondary/40 p-8 text-center">
-            <p className="text-sm text-muted-foreground">{t("sch.noMatch")}</p>
-            <div className="mt-3 flex flex-col gap-2">
+          <div className="rounded-[30px] border border-border/70 bg-card p-4 text-center shadow-soft">
+            <StipendiaIllustration variant="empty" className="mb-4" />
+            <div className="mx-auto h-12 w-12 rounded-2xl bg-secondary text-muted-foreground flex items-center justify-center mb-3">
+              <SearchX className="h-6 w-6" />
+            </div>
+            <h2 className="text-base font-semibold">{t("sch.noMatchTitle")}</h2>
+            <p className="mx-auto mt-1 max-w-[18rem] text-sm text-muted-foreground leading-relaxed">{t("sch.noMatch")}</p>
+            <div className="mt-4 flex flex-col gap-2">
               {hasMoreChunks && <Button variant="outline" className="rounded-xl" onClick={loadMore} disabled={loadingMore}>{loadingMore ? t("sch.loading") : t("sch.searchMore")}</Button>}
-              <button onClick={resetFilters} className="text-sm font-semibold text-primary">{t("sch.f.clear")}</button>
+              <Button onClick={resetFilters} variant="ghost" className="rounded-xl">{t("sch.f.clear")}</Button>
             </div>
           </div>
         ) : (
@@ -218,11 +226,16 @@ function BrowseCard({ scholarship: s, profile }: { scholarship: Scholarship; pro
   const t = useT();
   const eligible = profile ? checkEligibility(profile, s).eligible : null;
   const category = (s.tags ?? [])[0] ?? t("sch.studentRelevant");
+  const applied = isApplied(s.id);
+  const saved = loadSavedIds().includes(s.id);
   return (
-    <div className="block p-4 bg-card rounded-2xl border border-border/70 shadow-soft">
+    <div className="block p-4 bg-card rounded-2xl border border-border/70 shadow-soft transition-all active:scale-[0.99]">
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-semibold text-[15px] leading-snug">{s.name}</h3>
-        {eligible !== null && <EligibilityBadge eligible={eligible} />}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {saved && <BookmarkCheck className="h-4 w-4 text-primary" aria-label={t("nav.saved")} />}
+          {eligible !== null && <EligibilityBadge eligible={eligible} />}
+        </div>
       </div>
       <p className="text-[12px] text-muted-foreground flex items-center gap-1 mt-0.5">
         <Building2 className="h-3 w-3" /> {s.location || s.organization}
@@ -232,10 +245,11 @@ function BrowseCard({ scholarship: s, profile }: { scholarship: Scholarship; pro
           <Tag className="h-3.5 w-3.5 text-primary" />{category}
         </span>
         <span className="text-muted-foreground">{t("sch.externalSource")}</span>
+        {applied && <ApplicationStateBadge applied />}
       </div>
       <div className="mt-2.5 flex flex-wrap gap-1">
         {(s.tags ?? []).slice(0, 3).map((tg) => (
-          <span key={tg} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{tg}</span>
+          <span key={tg} className="text-[10px] font-medium px-2 py-0.5 rounded-full border border-border/60 bg-secondary/70 text-muted-foreground">{tg}</span>
         ))}
       </div>
       <Button asChild size="sm" variant="outline" className="mt-3 w-full rounded-xl gap-1">

@@ -27,6 +27,8 @@ export function loadProfile(): StudentProfile | null {
     if (p.ekonomiKommentar && !p.omDig) p.omDig = p.ekonomiKommentar;
     delete p.ekonomiKommentar;
     if (!Array.isArray(p.uploads)) p.uploads = [];
+    const allowedDocTypes = new Set(DOC_TYPES.map(({ k }) => k));
+    p.uploads = (p.uploads as StoredUpload[]).filter((u) => typeof u.documentType === "string" && allowedDocTypes.has(u.documentType as any));
     if (p.dokument && typeof p.dokument === "object") {
       const existingTypes = new Set((p.uploads as StoredUpload[]).map((u) => u.documentType));
       DOC_TYPES.forEach(({ k, label }) => {

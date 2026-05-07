@@ -2,18 +2,19 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { GraduationCap, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-
-const NAV = [
-  { to: "/", label: "Start" },
-  { to: "/profil", label: "Skapa profil" },
-  { to: "/stipendier", label: "Stipendier" },
-  { to: "/matchningar", label: "Mina matchningar" },
-  { to: "/ansokningar", label: "Mina ansökningar" },
-];
+import { useT } from "@/lib/i18n";
 
 export default function Header() {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const loc = useLocation();
+  const nav = [
+    { to: "/", label: t("nav.home") },
+    { to: "/profil", label: t("nav.profile") },
+    { to: "/stipendier", label: t("nav.scholarships") },
+    { to: "/matchningar", label: t("nav.matches") },
+    { to: "/utkast", label: t("nav.drafts") },
+  ];
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur-md">
@@ -26,7 +27,7 @@ export default function Header() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -48,7 +49,7 @@ export default function Header() {
         <button
           className="md:hidden p-2 rounded-lg hover:bg-secondary"
           onClick={() => setOpen((o) => !o)}
-          aria-label="Meny"
+          aria-label={t("nav.menu")}
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -57,7 +58,7 @@ export default function Header() {
       {open && (
         <div className="md:hidden border-t border-border bg-background">
           <nav className="container py-2 flex flex-col">
-            {NAV.map((item) => (
+            {nav.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}

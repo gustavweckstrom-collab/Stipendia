@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Building2, ExternalLink, FileText, CheckCircle2, AlertCircle, Bookmark, BookmarkCheck, Check, Info, Tag } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useT } from "@/lib/i18n";
-import { EligibilityBadge } from "@/components/StatusBadge";
+import { ApplicationStateBadge, EligibilityBadge } from "@/components/StatusBadge";
 import { DOC_TYPES } from "@/types/profile";
+import { toast } from "sonner";
 
 const documentLabelToType = new Map(DOC_TYPES.map(({ k, label }) => [label, k]));
 
@@ -53,33 +54,44 @@ export default function ScholarshipDetail() {
   const legacyDocs = profile?.dokument;
   const category = (s.tags ?? [])[0] ?? t("sch.studentRelevant");
   const place = s.location || s.source?.city || s.organization || t("common.missing");
+  const visibleRequiredDocuments = (s.requiredDocuments ?? []).filter((d) => documentLabelToType.has(d));
 
   return (
     <AppScreen
       title={s.name}
       back
       right={
-        <button onClick={() => setSaved(toggleSaved(s.id).includes(s.id))} className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-secondary text-foreground" aria-label="Spara">
+        <button
+          onClick={() => {
+            const next = toggleSaved(s.id);
+            const isSavedNow = next.includes(s.id);
+            setSaved(isSavedNow);
+            toast.success(isSavedNow ? t("saved.savedToast") : t("saved.removedToast"));
+          }}
+          className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-secondary text-foreground"
+          aria-label={t("nav.saved")}
+        >
           {saved ? <BookmarkCheck className="h-5 w-5 text-primary" /> : <Bookmark className="h-5 w-5" />}
         </button>
       }
     >
-      <div className="space-y-3">
-        <div className="rounded-3xl bg-warm-gradient text-primary-foreground p-4">
-          <p className="text-[11px] opacity-80 flex items-center gap-1"><Building2 className="h-3 w-3" /> {s.location || s.organization}</p>
+      <div className="space-y-4">
+        <div className="rounded-3xl border border-primary/15 bg-primary-soft/55 p-4 shadow-soft">
+          <p className="text-[11px] text-primary flex items-center gap-1 font-semibold"><Building2 className="h-3 w-3" /> {s.location || s.organization}</p>
           <h2 className="font-bold text-lg mt-0.5 leading-tight">{s.name}</h2>
           <div className="mt-3 flex items-center justify-between gap-2">
-            <p className="text-xs font-semibold opacity-90">{category}</p>
+            <p className="inline-flex rounded-full border border-primary/15 bg-white px-2.5 py-1 text-xs font-semibold text-primary">{category}</p>
             {elig && <EligibilityBadge eligible={elig.eligible} className="text-xs" />}
           </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <ApplicationStateBadge applied={applied} />
           <button
             onClick={() => { const next = toggleApplied(s.id); setAppliedState(next.includes(s.id)); }}
-            className="text-[11px] font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 px-2 py-1 rounded-full border border-border"
+            className="text-[11px] font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 px-2 py-1 rounded-full border border-border bg-card"
           >
-            <Check className="h-3 w-3" /> {applied ? t("sch.unmarkApplied") : t("sch.markApplied")}
+            <Check className="h-3 w-3" /> {applied ? t("match.statusApplied") : t("sch.markApplied")}
           </button>
         </div>
 
@@ -121,26 +133,26 @@ export default function ScholarshipDetail() {
             {elig.reasons.length > 0 && (
               <>
                 <h3 className="font-semibold text-sm flex items-center gap-1.5 mb-2 text-success"><CheckCircle2 className="h-4 w-4" /> {t("sch.whyEligible")}</h3>
-                <ul className="space-y-1 mb-3">
-                  {elig.reasons.map((r, i) => <li key={i} className="text-[12px] text-foreground/80">• {r}</li>)}
+                <ul className="list-disc space-y-1 mb-3 pl-4">
+                  {elig.reasons.map((r, i) => <li key={i} className="text-[12px] text-foreground/80">{r}</li>)}
                 </ul>
               </>
             )}
             {elig.blockers.length > 0 && (
               <>
                 <h3 className="font-semibold text-sm flex items-center gap-1.5 mb-2 text-muted-foreground"><AlertCircle className="h-4 w-4" /> {t("sch.whyNot")}</h3>
-                <ul className="space-y-1">
-                  {elig.blockers.map((r, i) => <li key={i} className="text-[12px] text-foreground/70">• {r}</li>)}
+                <ul className="list-disc space-y-1 pl-4">
+                  {elig.blockers.map((r, i) => <li key={i} className="text-[12px] text-foreground/70">{r}</li>)}
                 </ul>
               </>
             )}
           </div>
         )}
 
-        {(s.requiredDocuments ?? []).length > 0 && (
+        {visibleRequiredDocuments.length > 0 && (
           <Section title={t("sch.checklist")}>
             <div className="space-y-1.5">
-              {s.requiredDocuments.map((d) => {
+              {visibleRequiredDocuments.map((d) => {
                 const key = documentLabelToType.get(d);
                 const owned = Boolean(key && (uploadedDocTypes.has(key) || legacyDocs?.[key]));
                 return (
