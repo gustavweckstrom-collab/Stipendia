@@ -13,20 +13,20 @@ export default function BottomTabs() {
     { to: "/profil", label: t("nav.profile"), icon: User },
   ];
   return (
-    <nav className="absolute bottom-0 inset-x-0 z-30 bg-app/95 backdrop-blur-xl border-t border-border/70 pb-[env(safe-area-inset-bottom)]">
-      <ul className="flex items-stretch justify-around px-1 pt-1.5 pb-1.5">
+    <nav className="absolute bottom-0 inset-x-0 z-30 bg-app/95 backdrop-blur-xl border-t border-border/70 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
+      <ul className="flex items-stretch justify-around px-1 pt-1.5">
         {TABS.map(({ to, label, icon: Icon, end }) => (
           <li key={to} className="flex-1">
             <NavLink to={to} end={end} className={({ isActive }) => cn(
-              "flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl transition-colors min-w-0",
+              "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 py-1.5 transition-colors min-w-0",
               isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
             )}>
               {({ isActive }) => (
                 <>
-                  <span className={cn("flex h-7 w-12 items-center justify-center rounded-full transition-all", isActive && "bg-primary-soft")}>
+                  <span className={cn("flex h-7 w-11 max-w-full items-center justify-center rounded-full transition-all", isActive && "bg-primary-soft")}>
                     <Icon className="h-[18px] w-[18px]" strokeWidth={isActive ? 2.4 : 2} />
                   </span>
-                  <span className="text-[10px] font-medium leading-none truncate max-w-full">{label}</span>
+                  <span className="max-w-full truncate text-[9.5px] font-medium leading-none sm:text-[10px]">{label}</span>
                 </>
               )}
             </NavLink>

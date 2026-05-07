@@ -79,8 +79,10 @@
 
 @layer base {
   * { @apply border-border; }
-  html { font-family: 'Inter', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
-  body { @apply text-foreground; background: var(--gradient-page); background-attachment: fixed; font-feature-settings: "cv02", "cv03", "cv04", "cv11"; }
+  html { font-family: 'Inter', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; min-height: 100%; background: hsl(var(--app-bg)); }
+  body { @apply text-foreground; min-height: 100%; margin: 0; background: var(--gradient-page); background-attachment: fixed; font-feature-settings: "cv02", "cv03", "cv04", "cv11"; -webkit-text-size-adjust: 100%; overscroll-behavior-y: none; }
+  #root { min-height: 100%; }
+  button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
   h1, h2, h3, h4 { @apply tracking-tight; }
 }
 
