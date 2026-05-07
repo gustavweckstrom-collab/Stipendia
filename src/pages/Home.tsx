@@ -41,13 +41,15 @@ export default function Home() {
             <p className="text-[13px] text-muted-foreground mt-3 leading-relaxed">{t("home.intro")}</p>
           </div>
           <StipendiaIllustration variant="home" />
-          <div className="grid grid-cols-2 gap-2">
+          <div className={complete ? "grid grid-cols-2 gap-2" : "grid grid-cols-1 gap-2"}>
             <Button onClick={() => navigate("/stipendier")} className="rounded-xl h-11">
               {t("home.findCta")}
             </Button>
-            <Button onClick={() => navigate(complete ? "/matchningar" : "/profil?edit=1")} variant="outline" className="rounded-xl h-11">
-              {complete ? t("home.viewMatches") : t("home.startProfile")}
-            </Button>
+            {complete && (
+              <Button onClick={() => navigate("/matchningar")} variant="outline" className="rounded-xl h-11">
+                {t("home.viewMatches")}
+              </Button>
+            )}
           </div>
         </div>
       </section>
@@ -106,7 +108,7 @@ export default function Home() {
       </Section>
 
       <div className="grid grid-cols-2 gap-2">
-        <Link to="/sparade" className="p-4 bg-card rounded-2xl border border-border/60 shadow-soft transition-transform active:scale-[0.99]">
+        <Link to="/stipendier?sparade=1" className="p-4 bg-card rounded-2xl border border-border/60 shadow-soft transition-transform active:scale-[0.99]">
           <span className="h-10 w-10 rounded-xl bg-accent-soft text-accent-foreground flex items-center justify-center"><Bookmark className="h-5 w-5" /></span>
           <p className="font-semibold text-sm mt-2">{t("home.savedTitle")}</p>
           <p className="text-[11px] text-muted-foreground">{t("home.savedSub", { n: savedCount })}</p>

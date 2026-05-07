@@ -64,8 +64,79 @@ export async function loadScholarshipsByIds(ids: string[]): Promise<Scholarship[
   return ids.map((id) => results.find((item) => item.id === id)).filter(Boolean) as Scholarship[];
 }
 
+export function normalizeText(value: string | null | undefined): string {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/_x000D_/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+export function looseIncludes(a: string | null | undefined, b: string | null | undefined): boolean {
+  const left = normalizeText(a);
+  const right = normalizeText(b);
+  if (!left || !right) return false;
+  return left.includes(right) || right.includes(left);
+}
+
+function cleanLabel(value: string | null | undefined): string {
+  const text = (value ?? "").replace(/_x000D_/g, " ").replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  return text === text.toLowerCase() ? text.charAt(0).toUpperCase() + text.slice(1) : text;
+}
+
+export function scholarshipLocationLabel(scholarship: Scholarship): string | null {
+  return cleanLabel(scholarship.location || scholarship.source?.city || null) || null;
+}
+
+function isLocationLike(candidate: string, scholarship: Scholarship): boolean {
+  const locations = [scholarship.location, scholarship.source?.city, scholarship.source?.postalCode]
+    .filter(Boolean)
+    .map((value) => normalizeText(value));
+  const normalized = normalizeText(candidate);
+  return locations.some((location) => location && (normalized === location || location.includes(normalized)));
+}
+
+export function primaryScholarshipCategory(scholarship: Scholarship): string | null {
+  const candidates = [
+    ...(scholarship.fieldOfStudy ?? []),
+    ...(scholarship.purposes ?? []),
+    ...(scholarship.targetGroup ?? []),
+    ...(scholarship.tags ?? []),
+  ];
+  const seen = new Set<string>();
+  for (const candidate of candidates) {
+    const label = cleanLabel(candidate);
+    const normalized = normalizeText(label);
+    if (!label || seen.has(normalized)) continue;
+    seen.add(normalized);
+    if (isLocationLike(label, scholarship)) continue;
+    if (normalized === "studenter") continue;
+    return label;
+  }
+  return null;
+}
+
+export function distinctEligibilityRequirements(scholarship: Scholarship): string[] {
+  const description = normalizeText(scholarship.description);
+  const seen = new Set<string>();
+  return [...(scholarship.requirements ?? []), ...(scholarship.criteria ?? [])]
+    .map(cleanLabel)
+    .filter((text) => {
+      const normalized = normalizeText(text);
+      if (!normalized || seen.has(normalized)) return false;
+      seen.add(normalized);
+      if (!description) return true;
+      if (normalized === description) return false;
+      if (normalized.length > 80 && description.includes(normalized)) return false;
+      return true;
+    });
+}
+
 export function externalApplicationUrl(scholarship: Scholarship): string {
   if (scholarship.applicationUrl) return scholarship.applicationUrl;
-  const query = encodeURIComponent(`${scholarship.name} stipendium ansökan stiftelse`);
+  const query = encodeURIComponent(`${scholarship.name} stipendium ansokan stiftelse`);
   return `https://www.google.com/search?q=${query}`;
 }

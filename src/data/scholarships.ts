@@ -45,6 +45,7 @@ export interface ScholarshipIndex {
   pageSize: number;
   chunks: ScholarshipChunkInfo[];
   fields: string[];
+  fieldChunks?: Record<string, { count: number; chunks: string[] }>;
   locations: string[];
   generatedFrom: string;
 }

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { HashRouter, Route, Routes } from "react-router-dom";
+import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -13,7 +13,6 @@ const ScholarshipDetail = lazy(() => import("./pages/ScholarshipDetail"));
 const DraftPage = lazy(() => import("./pages/DraftPage"));
 const Drafts = lazy(() => import("./pages/Drafts"));
 const Matches = lazy(() => import("./pages/Matches"));
-const Saved = lazy(() => import("./pages/Saved"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -34,7 +33,7 @@ const App = () => (
               <Route path="/stipendier" element={<Scholarships />} />
               <Route path="/stipendier/:id" element={<ScholarshipDetail />} />
               <Route path="/matchningar" element={<Matches />} />
-              <Route path="/sparade" element={<Saved />} />
+              <Route path="/sparade" element={<Navigate to="/stipendier?sparade=1" replace />} />
               <Route path="/utkast" element={<Drafts />} />
               <Route path="/ansokningar" element={<Drafts />} />
               <Route path="/utkast/:id" element={<DraftPage />} />

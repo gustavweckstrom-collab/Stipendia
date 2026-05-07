@@ -1,11 +1,17 @@
 import { Link, useParams } from "react-router-dom";
 import { Scholarship } from "@/data/scholarships";
-import { externalApplicationUrl, loadScholarshipById } from "@/lib/scholarshipData";
+import {
+  distinctEligibilityRequirements,
+  externalApplicationUrl,
+  loadScholarshipById,
+  primaryScholarshipCategory,
+  scholarshipLocationLabel,
+} from "@/lib/scholarshipData";
 import { loadProfile, loadSavedIds, toggleSaved, isApplied, toggleApplied } from "@/lib/storage";
 import { checkEligibility } from "@/lib/eligibility";
 import AppScreen from "@/components/layout/AppScreen";
 import { Button } from "@/components/ui/button";
-import { Building2, ExternalLink, FileText, CheckCircle2, AlertCircle, Bookmark, BookmarkCheck, Check, Info, Tag } from "lucide-react";
+import { Building2, ExternalLink, FileText, CheckCircle2, AlertCircle, Bookmark, BookmarkCheck, Check, Info, Tag, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useT } from "@/lib/i18n";
 import { ApplicationStateBadge, EligibilityBadge } from "@/components/StatusBadge";
@@ -52,8 +58,9 @@ export default function ScholarshipDetail() {
   const elig = profile ? checkEligibility(profile, s) : null;
   const uploadedDocTypes = new Set((profile?.uploads ?? []).map((u) => u.documentType));
   const legacyDocs = profile?.dokument;
-  const category = (s.tags ?? [])[0] ?? t("sch.studentRelevant");
-  const place = s.location || s.source?.city || s.organization || t("common.missing");
+  const category = primaryScholarshipCategory(s) ?? t("sch.studentRelevant");
+  const place = scholarshipLocationLabel(s) || s.organization || t("common.missing");
+  const requirementTexts = distinctEligibilityRequirements(s);
   const visibleRequiredDocuments = (s.requiredDocuments ?? []).filter((d) => documentLabelToType.has(d));
 
   return (
@@ -77,7 +84,7 @@ export default function ScholarshipDetail() {
     >
       <div className="space-y-4">
         <div className="rounded-3xl border border-primary/15 bg-primary-soft/55 p-4 shadow-soft">
-          <p className="text-[11px] text-primary flex items-center gap-1 font-semibold"><Building2 className="h-3 w-3" /> {s.location || s.organization}</p>
+          <p className="text-[11px] text-primary flex items-center gap-1 font-semibold"><Building2 className="h-3 w-3" /> {place}</p>
           <h2 className="font-bold text-lg mt-0.5 leading-tight">{s.name}</h2>
           <div className="mt-3 flex items-center justify-between gap-2">
             <p className="inline-flex rounded-full border border-primary/15 bg-white px-2.5 py-1 text-xs font-semibold text-primary">{category}</p>
@@ -115,18 +122,34 @@ export default function ScholarshipDetail() {
           <p className="text-sm text-foreground/85 leading-relaxed">{s.description || t("common.missing")}</p>
         </Section>
 
-        {(s.criteria ?? []).length > 0 && (
-          <Section title={t("sch.criteria")}>
+        <Section title={t("sch.criteria")}>
+          {requirementTexts.length > 0 ? (
             <ul className="space-y-1.5">
-              {s.criteria.map((c) => (
+              {requirementTexts.map((c) => (
                 <li key={c} className="flex gap-2 text-sm">
                   <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                   <span className="text-foreground/85">{c}</span>
                 </li>
               ))}
             </ul>
-          </Section>
-        )}
+          ) : (
+            <p className="text-sm text-foreground/75 leading-relaxed">{t("sch.requirementsNeedReview")}</p>
+          )}
+          {(s.targetGroup ?? []).length > 0 && (
+            <div className="mt-3 rounded-2xl border border-border/60 bg-secondary/50 p-3">
+              <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <Users className="h-3.5 w-3.5" /> {t("sch.targetGroup")}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {s.targetGroup.map((group) => (
+                  <span key={group} className="rounded-full border border-border/60 bg-card px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                    {group}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </Section>
 
         {elig && (elig.reasons.length > 0 || elig.blockers.length > 0) && (
           <div className="rounded-3xl border border-border/60 bg-card p-4">

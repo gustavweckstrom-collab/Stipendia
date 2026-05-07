@@ -1,11 +1,19 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Scholarship, ScholarshipIndex } from "@/data/scholarships";
-import { loadFirstScholarshipChunk, loadScholarshipChunk } from "@/lib/scholarshipData";
+import {
+  loadFirstScholarshipChunk,
+  loadScholarshipChunk,
+  loadScholarshipsByIds,
+  looseIncludes,
+  normalizeText,
+  primaryScholarshipCategory,
+  scholarshipLocationLabel,
+} from "@/lib/scholarshipData";
 import AppScreen from "@/components/layout/AppScreen";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Building2, BookmarkCheck, ChevronRight, SlidersHorizontal, Tag, X, SearchX } from "lucide-react";
+import { Search, Bookmark, BookmarkCheck, ChevronRight, ExternalLink, MapPin, SlidersHorizontal, Tag, X, SearchX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOptionLabel, useT } from "@/lib/i18n";
 import { Switch } from "@/components/ui/switch";
@@ -15,7 +23,7 @@ import {
 import { SearchableCombobox } from "@/components/ui/SearchableCombobox";
 import { AMNESOMRADE_OPTIONS, SCHOLARSHIP_TYPES, ScholarshipType, STUDIEORT_OPTIONS } from "@/types/profile";
 import { checkEligibility, scholarshipTypes } from "@/lib/eligibility";
-import { isApplied, loadProfile, loadSavedIds } from "@/lib/storage";
+import { loadAppliedIds, loadProfile, loadSavedIds } from "@/lib/storage";
 import { ApplicationStateBadge, EligibilityBadge } from "@/components/StatusBadge";
 import { StipendiaIllustration } from "@/components/visual/StipendiaIllustration";
 
@@ -24,6 +32,9 @@ const RESULT_STEP = 50;
 export default function Scholarships() {
   const t = useT();
   const optionLabel = useOptionLabel();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const savedParam = searchParams.get("sparade");
+  const [view, setView] = useState<"all" | "saved">(() => savedParam === "1" ? "saved" : "all");
   const [query, setQuery] = useState("");
   const [field, setField] = useState<string>("");
   const [uni, setUni] = useState<string>("");
@@ -32,15 +43,34 @@ export default function Scholarships() {
   const [eligibleOnly, setEligibleOnly] = useState(false);
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState(loadProfile());
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [appliedIds, setAppliedIds] = useState<string[]>([]);
+  const [savedItems, setSavedItems] = useState<Scholarship[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
   const [index, setIndex] = useState<ScholarshipIndex | null>(null);
   const [items, setItems] = useState<Scholarship[]>([]);
+  const [loadedChunkFiles, setLoadedChunkFiles] = useState<string[]>([]);
   const [nextChunk, setNextChunk] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [visibleCount, setVisibleCount] = useState(RESULT_STEP);
 
   useEffect(() => {
-    const r = () => setProfile(loadProfile());
+    setView(savedParam === "1" ? "saved" : "all");
+  }, [savedParam]);
+
+  const setBrowseView = useCallback((next: "all" | "saved") => {
+    setView(next);
+    setSearchParams(next === "saved" ? { sparade: "1" } : {});
+  }, [setSearchParams]);
+
+  useEffect(() => {
+    const r = () => {
+      setProfile(loadProfile());
+      setSavedIds(loadSavedIds());
+      setAppliedIds(loadAppliedIds());
+    };
+    r();
     window.addEventListener("stipendia:update", r);
     return () => window.removeEventListener("stipendia:update", r);
   }, []);
@@ -54,6 +84,7 @@ export default function Scholarships() {
         setIndex(index);
         setItems(items);
         setNextChunk(nextChunk);
+        setLoadedChunkFiles(index.chunks[0] ? [index.chunks[0].file] : []);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -61,38 +92,80 @@ export default function Scholarships() {
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => setVisibleCount(RESULT_STEP), [query, field, uni, loc, types, eligibleOnly]);
+  useEffect(() => {
+    let cancelled = false;
+    setSavedLoading(true);
+    loadScholarshipsByIds(savedIds)
+      .then((items) => {
+        if (!cancelled) setSavedItems(items);
+      })
+      .finally(() => {
+        if (!cancelled) setSavedLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [savedIds]);
 
-  const loadMore = useCallback(async () => {
+  useEffect(() => setVisibleCount(RESULT_STEP), [view, query, field, uni, loc, types, eligibleOnly]);
+
+  const loadMore = useCallback(async (batchSize = 1) => {
     if (!index || loadingMore || nextChunk >= index.chunks.length) return;
     setLoadingMore(true);
     try {
-      const chunk = await loadScholarshipChunk(index.chunks[nextChunk].file);
-      setItems((current) => [...current, ...chunk]);
-      setNextChunk((current) => current + 1);
+      const allFiles = index.chunks.map((chunk) => chunk.file);
+      const fieldFiles = field && index.fieldChunks?.[field]?.chunks?.length ? index.fieldChunks[field].chunks : null;
+      const orderedFiles = fieldFiles ?? allFiles.slice(nextChunk);
+      const files = orderedFiles.filter((file) => !loadedChunkFiles.includes(file)).slice(0, batchSize);
+      if (files.length === 0) return;
+      const chunks = await Promise.all(files.map((file) => loadScholarshipChunk(file)));
+      setItems((current) => [...current, ...chunks.flat()]);
+      const nextLoaded = Array.from(new Set([...loadedChunkFiles, ...files]));
+      setLoadedChunkFiles(nextLoaded);
+      let sequentialIndex = nextChunk;
+      while (sequentialIndex < allFiles.length && nextLoaded.includes(allFiles[sequentialIndex])) sequentialIndex += 1;
+      setNextChunk(sequentialIndex);
     } finally {
       setLoadingMore(false);
     }
-  }, [index, loadingMore, nextChunk]);
+  }, [field, index, loadedChunkFiles, loadingMore, nextChunk]);
 
-  const norm = (s: string) => s.trim().toLowerCase();
-  const partial = (a: string, b: string) => norm(a).includes(norm(b)) || norm(b).includes(norm(a));
+  const sourceItems = view === "saved" ? savedItems : items;
+  const fieldOptions = useMemo(() => {
+    const fromIndex = index?.fields?.filter(Boolean) ?? [];
+    return fromIndex.length > 0 ? fromIndex : [...AMNESOMRADE_OPTIONS];
+  }, [index]);
 
   const filtered = useMemo(() => {
-    return items.filter((s) => {
+    const q = normalizeText(query);
+    return sourceItems.filter((s) => {
       if (query) {
-        const q = query.toLowerCase();
         const hit = [
-          s.name, s.organization, s.description, s.location ?? "", ...(s.tags ?? []), ...(s.targetGroup ?? []), ...(s.fieldOfStudy ?? []),
-        ].some((value) => value.toLowerCase().includes(q));
+          s.name,
+          s.organization,
+          s.description,
+          s.location ?? "",
+          s.source?.city ?? "",
+          ...(s.criteria ?? []),
+          ...(s.tags ?? []),
+          ...(s.targetGroup ?? []),
+          ...(s.fieldOfStudy ?? []),
+          ...(s.purposes ?? []),
+        ].some((value) => normalizeText(value).includes(q));
         if (!hit) return false;
       }
       if (field) {
         const fields = [...(s.eligibleFields ?? []), ...(s.fieldOfStudy ?? [])];
-        if (!(fields.some((f) => partial(f, field)) || partial(field, (s.tags ?? []).join(" ")))) return false;
+        if (!(fields.some((f) => looseIncludes(f, field)) || looseIncludes(field, (s.tags ?? []).join(" ")))) return false;
       }
-      if (uni && !((s.eligibleUniversities ?? []).length === 0 || (s.eligibleUniversities ?? []).some((u) => partial(u, uni)))) return false;
-      if (loc && !partial(s.location ?? s.source?.city ?? "", loc)) return false;
+      if (uni) {
+        const universityHit = [
+          ...(s.eligibleUniversities ?? []),
+          s.description,
+          ...(s.criteria ?? []),
+          ...(s.tags ?? []),
+        ].some((value) => looseIncludes(value, uni));
+        if (!universityHit) return false;
+      }
+      if (loc && !looseIncludes(s.location ?? s.source?.city ?? "", loc)) return false;
       if (types.length > 0) {
         const sTypes = scholarshipTypes(s);
         if (!types.some((tp) => sTypes.includes(tp))) return false;
@@ -102,25 +175,58 @@ export default function Scholarships() {
       }
       return true;
     });
-  }, [items, query, field, uni, loc, types, eligibleOnly, profile]);
+  }, [sourceItems, query, field, uni, loc, types, eligibleOnly, profile]);
 
   const activeFilterCount =
     (field ? 1 : 0) + (uni ? 1 : 0) + (loc ? 1 : 0) + (types.length > 0 ? 1 : 0) + (eligibleOnly ? 1 : 0);
 
   const resetFilters = () => { setField(""); setUni(""); setLoc(""); setTypes([]); setEligibleOnly(false); };
+  const resetSearchAndFilters = () => { setQuery(""); resetFilters(); };
 
-  const total = index?.total ?? items.length;
+  const total = view === "saved" ? savedItems.length : index?.total ?? items.length;
   const hasFilter = activeFilterCount > 0 || query.length > 0;
-  const countLabel = hasFilter
-    ? t("sch.loadedFiltered", { n: filtered.length, l: items.length, t: total })
-    : t("sch.loadedCount", { n: items.length, t: total });
+  const countLabel = view === "saved"
+    ? t("sch.savedLoaded", { n: filtered.length, t: savedItems.length })
+    : hasFilter
+      ? t("sch.loadedFiltered", { n: filtered.length, l: items.length, t: total })
+      : t("sch.loadedCount", { n: items.length, t: total });
   const visibleItems = filtered.slice(0, visibleCount);
   const hasMoreLoadedResults = visibleCount < filtered.length;
-  const hasMoreChunks = Boolean(index && nextChunk < index.chunks.length);
+  const remainingChunkFiles = useMemo(() => {
+    if (!index) return [];
+    const fieldFiles = field && index.fieldChunks?.[field]?.chunks?.length ? index.fieldChunks[field].chunks : null;
+    const candidates = fieldFiles ?? index.chunks.map((chunk) => chunk.file).slice(nextChunk);
+    return candidates.filter((file) => !loadedChunkFiles.includes(file));
+  }, [field, index, loadedChunkFiles, nextChunk]);
+  const hasMoreChunks = view === "all" && remainingChunkFiles.length > 0;
+  const isLoadingView = loading || (view === "saved" && savedLoading);
+  const savedEmpty = view === "saved" && savedIds.length === 0;
+  const searchMore = () => loadMore(hasFilter ? 12 : 1);
 
   return (
     <AppScreen title={t("sch.title")} subtitle={t("sch.subtitle")}>
       <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-1 rounded-2xl border border-border/70 bg-secondary/70 p-1">
+          <button
+            onClick={() => setBrowseView("all")}
+            className={cn(
+              "h-10 rounded-xl text-sm font-semibold transition-all",
+              view === "all" ? "bg-card text-foreground shadow-soft" : "text-muted-foreground"
+            )}
+          >
+            {t("sch.tabAll")}
+          </button>
+          <button
+            onClick={() => setBrowseView("saved")}
+            className={cn(
+              "h-10 rounded-xl text-sm font-semibold transition-all",
+              view === "saved" ? "bg-card text-foreground shadow-soft" : "text-muted-foreground"
+            )}
+          >
+            {t("sch.tabSaved", { n: savedIds.length })}
+          </button>
+        </div>
+
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -141,7 +247,7 @@ export default function Scholarships() {
               </SheetHeader>
               <div className="space-y-5 py-4">
                 <FilterGroup label={t("sch.f.field")}>
-                  <ChipRow options={[{ id: "", label: t("sch.f.all") }, ...AMNESOMRADE_OPTIONS.map((o) => ({ id: o, label: optionLabel(o) }))]} value={field} onChange={setField} />
+                  <ChipRow options={[{ id: "", label: t("sch.f.all") }, ...fieldOptions.map((o) => ({ id: o, label: optionLabel(o) }))]} value={field} onChange={setField} />
                 </FilterGroup>
                 <FilterGroup label={t("sch.f.university")}>
                   <Input value={uni} onChange={(e) => setUni(e.target.value)} placeholder={t("sch.f.universityPh")} />
@@ -177,6 +283,11 @@ export default function Scholarships() {
           </Sheet>
         </div>
         <p className="px-1 text-[11px] text-muted-foreground">{countLabel}</p>
+        {view === "all" && hasFilter && hasMoreChunks && (
+          <p className="rounded-2xl border border-border/60 bg-secondary/50 px-3 py-2 text-[12px] leading-relaxed text-muted-foreground">
+            {t("sch.stepwiseHint")}
+          </p>
+        )}
 
         {activeFilterCount > 0 && (
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -189,8 +300,18 @@ export default function Scholarships() {
           </div>
         )}
 
-        {loading ? (
+        {isLoadingView ? (
           <div className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">{t("sch.loading")}</div>
+        ) : savedEmpty ? (
+          <div className="rounded-[30px] border border-border/70 bg-card p-4 text-center shadow-soft">
+            <StipendiaIllustration variant="saved" className="mb-4" />
+            <div className="mx-auto h-12 w-12 rounded-2xl bg-primary-soft text-primary flex items-center justify-center mb-3">
+              <Bookmark className="h-6 w-6" />
+            </div>
+            <h2 className="text-base font-semibold">{t("saved.emptyTitle")}</h2>
+            <p className="mx-auto mt-1 max-w-[18rem] text-sm text-muted-foreground leading-relaxed">{t("saved.empty")}</p>
+            <Button onClick={() => setBrowseView("all")} className="mt-4 rounded-xl h-11">{t("sch.tabAll")}</Button>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-[30px] border border-border/70 bg-card p-4 text-center shadow-soft">
             <StipendiaIllustration variant="empty" className="mb-4" />
@@ -200,17 +321,27 @@ export default function Scholarships() {
             <h2 className="text-base font-semibold">{t("sch.noMatchTitle")}</h2>
             <p className="mx-auto mt-1 max-w-[18rem] text-sm text-muted-foreground leading-relaxed">{t("sch.noMatch")}</p>
             <div className="mt-4 flex flex-col gap-2">
-              {hasMoreChunks && <Button variant="outline" className="rounded-xl" onClick={loadMore} disabled={loadingMore}>{loadingMore ? t("sch.loading") : t("sch.searchMore")}</Button>}
-              <Button onClick={resetFilters} variant="ghost" className="rounded-xl">{t("sch.f.clear")}</Button>
+              {hasMoreChunks && <Button variant="outline" className="rounded-xl" onClick={searchMore} disabled={loadingMore}>{loadingMore ? t("sch.loading") : t("sch.searchMore")}</Button>}
+              <Button onClick={resetSearchAndFilters} variant="ghost" className="rounded-xl">{t("sch.f.clear")}</Button>
             </div>
           </div>
         ) : (
           <>
-            <div className="space-y-2.5">{visibleItems.map((s) => <BrowseCard key={s.id} scholarship={s} profile={profile} />)}</div>
+            <div className="space-y-2.5">
+              {visibleItems.map((s) => (
+                <BrowseCard
+                  key={s.id}
+                  scholarship={s}
+                  profile={profile}
+                  saved={savedIds.includes(s.id)}
+                  applied={appliedIds.includes(s.id)}
+                />
+              ))}
+            </div>
             <div className="space-y-2">
               {hasMoreLoadedResults && <Button variant="outline" className="w-full rounded-xl" onClick={() => setVisibleCount((count) => count + RESULT_STEP)}>{t("sch.loadMore")}</Button>}
               {!hasMoreLoadedResults && hasMoreChunks && (
-                <Button variant="outline" className="w-full rounded-xl" onClick={loadMore} disabled={loadingMore}>
+                <Button variant="outline" className="w-full rounded-xl" onClick={searchMore} disabled={loadingMore}>
                   {loadingMore ? t("sch.loading") : hasFilter ? t("sch.searchMore") : t("sch.loadMore")}
                 </Button>
               )}
@@ -222,40 +353,66 @@ export default function Scholarships() {
   );
 }
 
-function BrowseCard({ scholarship: s, profile }: { scholarship: Scholarship; profile: ReturnType<typeof loadProfile> }) {
+function BrowseCard({
+  scholarship: s,
+  profile,
+  saved,
+  applied,
+}: {
+  scholarship: Scholarship;
+  profile: ReturnType<typeof loadProfile>;
+  saved: boolean;
+  applied: boolean;
+}) {
   const t = useT();
   const eligible = profile ? checkEligibility(profile, s).eligible : null;
-  const category = (s.tags ?? [])[0] ?? t("sch.studentRelevant");
-  const applied = isApplied(s.id);
-  const saved = loadSavedIds().includes(s.id);
+  const category = primaryScholarshipCategory(s) ?? t("sch.studentRelevant");
+  const location = scholarshipLocationLabel(s);
   return (
-    <div className="block p-4 bg-card rounded-2xl border border-border/70 shadow-soft transition-all active:scale-[0.99]">
+    <Link to={`/stipendier/${s.id}`} className="group block rounded-[26px] border border-border/70 bg-card p-4 shadow-soft transition-all active:scale-[0.99] hover:shadow-card">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="font-semibold text-[15px] leading-snug">{s.name}</h3>
+        <div className="min-w-0">
+          <h3 className="font-bold text-[15px] leading-snug tracking-tight group-hover:text-primary transition-colors">{s.name}</h3>
+          {location && (
+            <p className="mt-1 flex items-center gap-1 text-[12px] text-muted-foreground">
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-primary/75" />
+              <span className="truncate">{location}</span>
+            </p>
+          )}
+        </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          {saved && <BookmarkCheck className="h-4 w-4 text-primary" aria-label={t("nav.saved")} />}
           {eligible !== null && <EligibilityBadge eligible={eligible} />}
         </div>
       </div>
-      <p className="text-[12px] text-muted-foreground flex items-center gap-1 mt-0.5">
-        <Building2 className="h-3 w-3" /> {s.location || s.organization}
-      </p>
-      <div className="mt-2.5 flex items-center gap-3 text-xs flex-wrap">
-        <span className="flex items-center gap-1 font-semibold text-foreground">
-          <Tag className="h-3.5 w-3.5 text-primary" />{category}
-        </span>
-        <span className="text-muted-foreground">{t("sch.externalSource")}</span>
+
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        <MetaPill icon={Tag} label={category} tone="primary" />
+        <MetaPill icon={ExternalLink} label={t("sch.externalSourceShort")} />
+        {saved && <MetaPill icon={BookmarkCheck} label={t("nav.saved")} tone="success" />}
         {applied && <ApplicationStateBadge applied />}
       </div>
-      <div className="mt-2.5 flex flex-wrap gap-1">
-        {(s.tags ?? []).slice(0, 3).map((tg) => (
-          <span key={tg} className="text-[10px] font-medium px-2 py-0.5 rounded-full border border-border/60 bg-secondary/70 text-muted-foreground">{tg}</span>
-        ))}
+
+      <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
+        <span className="text-[12px] font-semibold text-muted-foreground">{t("sch.cardHint")}</span>
+        <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-primary">
+          {t("sch.details")} <ChevronRight className="h-3.5 w-3.5" />
+        </span>
       </div>
-      <Button asChild size="sm" variant="outline" className="mt-3 w-full rounded-xl gap-1">
-        <Link to={`/stipendier/${s.id}`}>{t("sch.details")} <ChevronRight className="h-4 w-4" /></Link>
-      </Button>
-    </div>
+    </Link>
+  );
+}
+
+function MetaPill({ icon: Icon, label, tone = "neutral" }: { icon: any; label: string; tone?: "neutral" | "primary" | "success" }) {
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+      tone === "primary" && "border-primary/20 bg-primary-soft text-primary",
+      tone === "success" && "border-success/20 bg-success-soft text-success",
+      tone === "neutral" && "border-border/70 bg-secondary/65 text-muted-foreground"
+    )}>
+      <Icon className="h-3.5 w-3.5" />
+      {label}
+    </span>
   );
 }
 

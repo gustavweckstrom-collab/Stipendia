@@ -22,7 +22,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto no-scrollbar pt-[env(safe-area-inset-top)] pb-[calc(5.75rem+env(safe-area-inset-bottom))] overscroll-contain">
+        <div className="flex-1 overflow-y-auto no-scrollbar pt-[env(safe-area-inset-top)] pb-[calc(6.5rem+env(safe-area-inset-bottom))] overscroll-contain">
           {children}
         </div>
 

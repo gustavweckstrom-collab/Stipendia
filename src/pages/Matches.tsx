@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Scholarship, ScholarshipIndex } from "@/data/scholarships";
-import { externalApplicationUrl, loadFirstScholarshipChunk, loadScholarshipChunk } from "@/lib/scholarshipData";
+import { externalApplicationUrl, loadFirstScholarshipChunk, loadScholarshipChunk, primaryScholarshipCategory, scholarshipLocationLabel } from "@/lib/scholarshipData";
 import { checkEligibility } from "@/lib/eligibility";
 import { isApplied, loadProfile, toggleApplied } from "@/lib/storage";
 import AppScreen from "@/components/layout/AppScreen";
@@ -150,7 +150,8 @@ function EligibilityCard({ item }: { item: EligibilityItem }) {
   const t = useT();
   const { s, state, reasons, blockers } = item;
   const applied = isApplied(s.id);
-  const category = (s.tags ?? [])[0] ?? t("sch.studentRelevant");
+  const category = primaryScholarshipCategory(s) ?? t("sch.studentRelevant");
+  const location = scholarshipLocationLabel(s) || s.organization;
   const notes = state === "eligible" ? reasons : blockers;
 
   return (
@@ -159,7 +160,7 @@ function EligibilityCard({ item }: { item: EligibilityItem }) {
         <Link to={`/stipendier/${s.id}`} className="block min-w-0">
           <h3 className="font-semibold text-[15px] leading-snug hover:text-primary transition-colors">{s.name}</h3>
           <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-            <Building2 className="h-3 w-3" /> {s.location || s.organization}
+            <Building2 className="h-3 w-3" /> {location}
           </p>
         </Link>
         <div className="flex flex-col items-end gap-1">
