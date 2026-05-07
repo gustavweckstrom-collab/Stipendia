@@ -1,0 +1,13 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#F6FBF8"/>
+  <rect x="72" y="72" width="1056" height="486" rx="40" fill="#FFFFFF"/>
+  <rect x="72" y="72" width="1056" height="486" rx="40" stroke="#DCEFE5" stroke-width="4"/>
+  <circle cx="996" cy="144" r="84" fill="#E8F7EF"/>
+  <circle cx="162" cy="498" r="116" fill="#FCEEF4"/>
+  <rect x="132" y="128" width="120" height="120" rx="32" fill="#2FA866"/>
+  <path d="M171 190.5L188.5 208L222 166" stroke="white" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="292" y="172" fill="#143327" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="700">Stipendia</text>
+  <text x="132" y="344" fill="#143327" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="800">Hitta stipendier</text>
+  <text x="132" y="426" fill="#143327" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="800">som passar dig</text>
+  <text x="132" y="498" fill="#5A6D63" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="500">Hitta relevanta stipendier och kom igång med din ansökan.</text>
+</svg>
