@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router-dom";
-import { SCHOLARSHIPS } from "@/data/scholarships";
+import { Scholarship } from "@/data/scholarships";
+import { loadScholarshipById } from "@/lib/scholarshipData";
 import { loadDrafts, loadProfile, saveDraft } from "@/lib/storage";
 import { checkEligibility } from "@/lib/eligibility";
 import { generateDraft } from "@/lib/draft";
@@ -14,38 +15,53 @@ import { useT } from "@/lib/i18n";
 export default function DraftPage() {
   const t = useT();
   const { id } = useParams();
-  const scholarship = SCHOLARSHIPS.find((s) => s.id === id);
   const profile = loadProfile();
+  const [scholarship, setScholarship] = useState<Scholarship | null>(null);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!scholarship) return;
-    const existing = loadDrafts().find((d) => d.scholarshipId === scholarship.id);
-    if (existing) {
-      setText(existing.text);
+    let cancelled = false;
+    let tt: ReturnType<typeof setTimeout> | undefined;
+    setLoading(true);
+    if (!id) {
       setLoading(false);
-    } else if (profile) {
-      setLoading(true);
-      const tt = setTimeout(() => {
-        const elig = checkEligibility(profile, scholarship);
-        const generated = generateDraft(profile, scholarship, elig);
-        setText(generated);
-        // Auto-save as draft on first generation
-        saveDraft({
-          scholarshipId: scholarship.id,
-          scholarshipName: scholarship.name,
-          text: generated,
-          updatedAt: new Date().toISOString(),
-        });
-        setLoading(false);
-      }, 400);
-      return () => clearTimeout(tt);
-    } else {
-      setLoading(false);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadScholarshipById(id).then((loaded) => {
+      if (cancelled) return;
+      setScholarship(loaded);
+      if (!loaded) {
+        setLoading(false);
+        return;
+      }
+      const existing = loadDrafts().find((d) => d.scholarshipId === loaded.id);
+      if (existing) {
+        setText(existing.text);
+        setLoading(false);
+      } else if (profile) {
+        tt = setTimeout(() => {
+          const elig = checkEligibility(profile, loaded);
+          const generated = generateDraft(profile, loaded, elig);
+          setText(generated);
+          saveDraft({
+            scholarshipId: loaded.id,
+            scholarshipName: loaded.name,
+            text: generated,
+            updatedAt: new Date().toISOString(),
+          });
+          setLoading(false);
+        }, 400);
+      } else {
+        setLoading(false);
+      }
+    });
+    return () => { cancelled = true; if (tt) clearTimeout(tt); };
   }, [id]);
+
+  if (loading && !scholarship) {
+    return <AppScreen title={t("draft.title")} back><p className="text-sm text-muted-foreground text-center py-10">{t("sch.loading")}</p></AppScreen>;
+  }
 
   if (!scholarship) {
     return <AppScreen title={t("draft.title")} back><p className="text-sm text-muted-foreground text-center py-10">—</p></AppScreen>;

@@ -1,7 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { SCHOLARSHIPS } from "@/data/scholarships";
+import { Scholarship } from "@/data/scholarships";
 import { checkEligibility } from "./eligibility";
 import { EMPTY_PROFILE, EKONOMI_OPTIONS, StudentProfile } from "@/types/profile";
+
+const baseScholarship: Scholarship = {
+  id: "foundation-test",
+  name: "Teststiftelsen",
+  organization: "Teststiftelsen",
+  description: "Stipendium för studenter.",
+  targetGroup: ["studenter"],
+  requirements: [],
+  location: null,
+  educationLevel: null,
+  fieldOfStudy: [],
+  amount: null,
+  deadline: null,
+  applicationUrl: null,
+  source: { name: "test" },
+  tags: [],
+  criteria: [],
+  requiredDocuments: [],
+  eligibleUniversities: [],
+  eligibleFields: [],
+  eligibleLocations: [],
+  purposes: [],
+};
 
 const profile = (overrides: Partial<StudentProfile> = {}): StudentProfile => ({
   ...EMPTY_PROFILE,
@@ -21,7 +44,7 @@ const profile = (overrides: Partial<StudentProfile> = {}): StudentProfile => ({
 
 describe("checkEligibility", () => {
   it("blocks need-based scholarships when the profile has no economic need", () => {
-    const scholarship = SCHOLARSHIPS.find((s) => s.id === "behov-stiftelse")!;
+    const scholarship = { ...baseScholarship, needBased: true };
 
     const result = checkEligibility(profile({ ekonomi: EKONOMI_OPTIONS[0] }), scholarship);
 
@@ -30,7 +53,7 @@ describe("checkEligibility", () => {
   });
 
   it("blocks engagement scholarships when engagement is missing", () => {
-    const scholarship = SCHOLARSHIPS.find((s) => s.id === "forening-engagemang")!;
+    const scholarship = { ...baseScholarship, engagementRequired: true };
 
     const result = checkEligibility(profile({ engagemang: "" }), scholarship);
 
@@ -39,7 +62,7 @@ describe("checkEligibility", () => {
   });
 
   it("blocks women-in-tech scholarships for non-matching gender", () => {
-    const scholarship = SCHOLARSHIPS.find((s) => s.id === "kvinnor-teknik")!;
+    const scholarship = { ...baseScholarship, criteria: ["Identifierar sig som kvinna"] };
 
     const result = checkEligibility(profile({ kon: "Man" }), scholarship);
 

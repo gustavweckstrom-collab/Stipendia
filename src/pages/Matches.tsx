@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { SCHOLARSHIPS, Scholarship } from "@/data/scholarships";
-import { checkEligibility, scholarshipTypes } from "@/lib/eligibility";
+import { Scholarship, ScholarshipIndex } from "@/data/scholarships";
+import { externalApplicationUrl, loadFirstScholarshipChunk, loadScholarshipChunk } from "@/lib/scholarshipData";
+import { checkEligibility } from "@/lib/eligibility";
 import { loadProfile, isApplied, toggleApplied } from "@/lib/storage";
 import AppScreen from "@/components/layout/AppScreen";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Building2, Coins, Calendar, CheckCircle2, FileEdit, ExternalLink, UserPlus, Check } from "lucide-react";
+import { Sparkles, Building2, CheckCircle2, FileEdit, ExternalLink, UserPlus, Check, Tag } from "lucide-react";
 import { StudentProfile } from "@/types/profile";
 import { useT } from "@/lib/i18n";
-import { EligibilityBadge, ApplicationStatusBadge } from "@/components/StatusBadge";
+import { EligibilityBadge } from "@/components/StatusBadge";
 import { Switch } from "@/components/ui/switch";
 
 export default function Matches() {
@@ -16,6 +17,11 @@ export default function Matches() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [index, setIndex] = useState<ScholarshipIndex | null>(null);
+  const [items, setItems] = useState<Scholarship[]>([]);
+  const [nextChunk, setNextChunk] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -25,16 +31,45 @@ export default function Matches() {
     return () => window.removeEventListener("stipendia:update", refresh);
   }, []);
 
-  const items = useMemo(() => {
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    loadFirstScholarshipChunk()
+      .then(({ index, items, nextChunk }) => {
+        if (cancelled) return;
+        setIndex(index);
+        setItems(items);
+        setNextChunk(nextChunk);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const loadMore = useCallback(async () => {
+    if (!index || loadingMore || nextChunk >= index.chunks.length) return;
+    setLoadingMore(true);
+    try {
+      const chunk = await loadScholarshipChunk(index.chunks[nextChunk].file);
+      setItems((current) => [...current, ...chunk]);
+      setNextChunk((current) => current + 1);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [index, loadingMore, nextChunk]);
+
+  const matchedItems = useMemo(() => {
     if (!profile) return [] as { s: Scholarship; eligible: boolean; reasons: string[]; blockers: string[] }[];
-    return SCHOLARSHIPS.map((s) => {
+    return items.map((s) => {
       const r = checkEligibility(profile, s);
       return { s, eligible: r.eligible, reasons: r.reasons, blockers: r.blockers };
     }).sort((a, b) => Number(b.eligible) - Number(a.eligible));
-  }, [profile]);
+  }, [profile, items]);
 
-  const eligible = items.filter((i) => i.eligible);
-  const notEligible = items.filter((i) => !i.eligible);
+  const eligible = matchedItems.filter((i) => i.eligible);
+  const notEligible = matchedItems.filter((i) => !i.eligible);
+  const hasMoreChunks = Boolean(index && nextChunk < index.chunks.length);
 
   if (!profile) {
     return (
@@ -56,14 +91,16 @@ export default function Matches() {
   return (
     <AppScreen title={t("match.title")} subtitle={t("match.subtitle", { n: eligible.length })}>
       <div className="space-y-4">
-        {eligible.length === 0 && (
+        {loading && <div className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">{t("sch.loading")}</div>}
+
+        {!loading && eligible.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border bg-secondary/40 p-6 text-center">
             <p className="text-sm text-muted-foreground">{t("match.empty")}</p>
             <Button onClick={() => navigate("/profil?edit=1")} variant="outline" className="mt-3 rounded-xl">{t("match.updateProfile")}</Button>
           </div>
         )}
 
-        <div className="space-y-2.5">{eligible.map((i) => <MatchCard key={i.s.id} item={i} />)}</div>
+        <div className="space-y-2.5">{eligible.slice(0, 50).map((i) => <MatchCard key={i.s.id} item={i} />)}</div>
 
         {notEligible.length > 0 && (
           <div className="flex items-center justify-between bg-card rounded-2xl border border-border/60 px-3 py-2.5">
@@ -78,8 +115,14 @@ export default function Matches() {
               <h2 className="font-semibold text-[15px]">{t("match.notEligibleTitle")}</h2>
               <p className="text-[12px] text-muted-foreground">{t("match.notEligibleSub")}</p>
             </div>
-            <div className="space-y-2.5">{notEligible.map((i) => <MatchCard key={i.s.id} item={i} />)}</div>
+            <div className="space-y-2.5">{notEligible.slice(0, 50).map((i) => <MatchCard key={i.s.id} item={i} />)}</div>
           </section>
+        )}
+
+        {hasMoreChunks && (
+          <Button variant="outline" className="w-full rounded-xl" onClick={loadMore} disabled={loadingMore}>
+            {loadingMore ? t("sch.loading") : t("sch.loadMore")}
+          </Button>
         )}
       </div>
     </AppScreen>
@@ -89,8 +132,8 @@ export default function Matches() {
 function MatchCard({ item }: { item: { s: Scholarship; eligible: boolean; reasons: string[]; blockers: string[] } }) {
   const t = useT();
   const { s, eligible, reasons } = item;
-  const deadline = new Date(s.deadline).toLocaleDateString(undefined, { day: "numeric", month: "short" });
   const applied = isApplied(s.id);
+  const category = (s.tags ?? [])[0] ?? t("sch.studentRelevant");
 
   return (
     <div className="p-4 bg-card rounded-2xl border border-border/70 shadow-soft">
@@ -98,16 +141,15 @@ function MatchCard({ item }: { item: { s: Scholarship; eligible: boolean; reason
         <Link to={`/stipendier/${s.id}`} className="block min-w-0">
           <h3 className="font-semibold text-[15px] leading-snug hover:text-primary transition-colors">{s.name}</h3>
           <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-            <Building2 className="h-3 w-3" /> {s.organization}
+            <Building2 className="h-3 w-3" /> {s.location || s.organization}
           </p>
         </Link>
         <EligibilityBadge eligible={eligible} />
       </div>
 
       <div className="mt-2.5 flex items-center gap-3 text-xs flex-wrap">
-        <span className="flex items-center gap-1 font-semibold"><Coins className="h-3.5 w-3.5 text-primary" />{s.amount.toLocaleString("sv-SE")} kr</span>
-        <span className="flex items-center gap-1 text-muted-foreground"><Calendar className="h-3.5 w-3.5" />{deadline}</span>
-        <ApplicationStatusBadge scholarship={s} />
+        <span className="flex items-center gap-1 font-semibold"><Tag className="h-3.5 w-3.5 text-primary" />{category}</span>
+        <span className="text-muted-foreground">{t("sch.externalSource")}</span>
       </div>
 
       {eligible && reasons.length > 0 && (
@@ -128,7 +170,7 @@ function MatchCard({ item }: { item: { s: Scholarship; eligible: boolean; reason
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Button asChild size="sm" className="rounded-xl gap-1">
-          <a href={s.applicationUrl} target="_blank" rel="noreferrer">{t("match.apply")} <ExternalLink className="h-3.5 w-3.5" /></a>
+          <a href={externalApplicationUrl(s)} target="_blank" rel="noopener noreferrer">{t("sch.applyExternal")} <ExternalLink className="h-3.5 w-3.5" /></a>
         </Button>
         <Button asChild size="sm" variant="outline" className="rounded-xl gap-1">
           <Link to={`/utkast/${s.id}`}><FileEdit className="h-3.5 w-3.5" /> {t("match.draft")}</Link>
@@ -143,6 +185,3 @@ function MatchCard({ item }: { item: { s: Scholarship; eligible: boolean; reason
     </div>
   );
 }
-
-// keep tree-shaking happy if unused
-export const _types = scholarshipTypes;

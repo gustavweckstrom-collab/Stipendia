@@ -21,6 +21,9 @@ export function generateDraft(
   const intressen = profile.intressen?.trim();
   const omDig = profile.omDig?.trim();
   const docs = (profile.uploads ?? []).map((u) => u.documentType);
+  const amount = scholarship.amount
+    ? `${scholarship.amount.toLocaleString(en ? "en-GB" : "sv-SE")} SEK`
+    : en ? "funding" : "stipendiet";
 
   const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
 
@@ -49,7 +52,7 @@ ${pick(opens)}
 
 ${pick(motivations)} ${pick(motivations)}
 
-${fitLine} If awarded ${scholarship.amount.toLocaleString("en-GB")} SEK, I would use the funding to ${syfte.toLowerCase()}.${docsLine}
+${fitLine} If awarded ${amount}, I would use the support to ${syfte.toLowerCase()}.${docsLine}
 
 Thank you for considering my application.
 
@@ -83,7 +86,7 @@ ${pick(opens)}
 
 ${pick(motivations)} ${pick(motivations)}
 
-${fitLine} Om jag tilldelas ${scholarship.amount.toLocaleString("sv-SE")} kr skulle medlen användas till att ${syfte.toLowerCase()}.${docsLine}
+${fitLine} Om jag tilldelas ${amount} skulle stödet användas till att ${syfte.toLowerCase()}.${docsLine}
 
 Tack för att ni läser min ansökan.
 

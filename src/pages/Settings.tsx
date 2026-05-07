@@ -14,11 +14,16 @@ import {
 
 const NOTIF_KEY = "stipendia.notifs";
 
-interface Notifs { deadlines: boolean; matchUpdates: boolean }
-const defaultNotifs: Notifs = { deadlines: true, matchUpdates: false };
+interface Notifs { applicationReminders: boolean; matchUpdates: boolean }
+const defaultNotifs: Notifs = { applicationReminders: true, matchUpdates: false };
 
 function loadNotifs(): Notifs {
-  try { const raw = localStorage.getItem(NOTIF_KEY); return raw ? { ...defaultNotifs, ...JSON.parse(raw) } : defaultNotifs; }
+  try {
+    const raw = localStorage.getItem(NOTIF_KEY);
+    if (!raw) return defaultNotifs;
+    const parsed = JSON.parse(raw);
+    return { ...defaultNotifs, ...parsed, applicationReminders: parsed.applicationReminders ?? parsed.deadlines ?? defaultNotifs.applicationReminders };
+  }
   catch { return defaultNotifs; }
 }
 function saveNotifs(n: Notifs) { localStorage.setItem(NOTIF_KEY, JSON.stringify(n)); }
@@ -41,8 +46,8 @@ export default function SettingsPage() {
     <AppScreen title={t("settings.title")}>
       <div className="space-y-3">
         <Section icon={Bell} title={t("settings.notifications")}>
-          <Row label={t("settings.deadlineReminders")}>
-            <Switch checked={notifs.deadlines} onCheckedChange={(v) => update("deadlines", v)} />
+          <Row label={t("settings.applicationReminders")}>
+            <Switch checked={notifs.applicationReminders} onCheckedChange={(v) => update("applicationReminders", v)} />
           </Row>
           <Row label={t("settings.matchUpdates")} last>
             <Switch checked={notifs.matchUpdates} onCheckedChange={(v) => update("matchUpdates", v)} />

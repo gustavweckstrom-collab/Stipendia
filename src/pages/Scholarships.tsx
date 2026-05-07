@@ -1,10 +1,11 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { SCHOLARSHIPS, Scholarship } from "@/data/scholarships";
+import { Scholarship, ScholarshipIndex } from "@/data/scholarships";
+import { loadFirstScholarshipChunk, loadScholarshipChunk } from "@/lib/scholarshipData";
 import AppScreen from "@/components/layout/AppScreen";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Building2, Coins, Calendar, ChevronRight, SlidersHorizontal, X } from "lucide-react";
+import { Search, Building2, ChevronRight, SlidersHorizontal, Tag, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { Switch } from "@/components/ui/switch";
@@ -15,7 +16,9 @@ import { SearchableCombobox } from "@/components/ui/SearchableCombobox";
 import { AMNESOMRADE_OPTIONS, SCHOLARSHIP_TYPES, ScholarshipType, UNIVERSITET_OPTIONS, STUDIEORT_OPTIONS } from "@/types/profile";
 import { checkEligibility, scholarshipTypes } from "@/lib/eligibility";
 import { loadProfile } from "@/lib/storage";
-import { EligibilityBadge, ApplicationStatusBadge } from "@/components/StatusBadge";
+import { EligibilityBadge } from "@/components/StatusBadge";
+
+const RESULT_STEP = 50;
 
 export default function Scholarships() {
   const t = useT();
@@ -27,6 +30,12 @@ export default function Scholarships() {
   const [eligibleOnly, setEligibleOnly] = useState(false);
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState(loadProfile());
+  const [index, setIndex] = useState<ScholarshipIndex | null>(null);
+  const [items, setItems] = useState<Scholarship[]>([]);
+  const [nextChunk, setNextChunk] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(RESULT_STEP);
 
   useEffect(() => {
     const r = () => setProfile(loadProfile());
@@ -34,19 +43,54 @@ export default function Scholarships() {
     return () => window.removeEventListener("stipendia:update", r);
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    loadFirstScholarshipChunk()
+      .then(({ index, items, nextChunk }) => {
+        if (cancelled) return;
+        setIndex(index);
+        setItems(items);
+        setNextChunk(nextChunk);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => setVisibleCount(RESULT_STEP), [query, field, uni, loc, types, eligibleOnly]);
+
+  const loadMore = useCallback(async () => {
+    if (!index || loadingMore || nextChunk >= index.chunks.length) return;
+    setLoadingMore(true);
+    try {
+      const chunk = await loadScholarshipChunk(index.chunks[nextChunk].file);
+      setItems((current) => [...current, ...chunk]);
+      setNextChunk((current) => current + 1);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [index, loadingMore, nextChunk]);
+
   const norm = (s: string) => s.trim().toLowerCase();
   const partial = (a: string, b: string) => norm(a).includes(norm(b)) || norm(b).includes(norm(a));
 
   const filtered = useMemo(() => {
-    return SCHOLARSHIPS.filter((s) => {
+    return items.filter((s) => {
       if (query) {
         const q = query.toLowerCase();
-        const hit = s.name.toLowerCase().includes(q) || s.organization.toLowerCase().includes(q) || s.tags.some((t) => t.toLowerCase().includes(q));
+        const hit = [
+          s.name, s.organization, s.description, s.location ?? "", ...(s.tags ?? []), ...(s.targetGroup ?? []), ...(s.fieldOfStudy ?? []),
+        ].some((value) => value.toLowerCase().includes(q));
         if (!hit) return false;
       }
-      if (field && !(s.eligibleFields.length === 0 || s.eligibleFields.some((f) => partial(f, field)) || partial(field, s.tags.join(" ")))) return false;
-      if (uni && !(s.eligibleUniversities.length === 0 || s.eligibleUniversities.some((u) => partial(u, uni)))) return false;
-      if (loc && !(s.eligibleLocations.length === 0 || s.eligibleLocations.some((l) => partial(l, loc)))) return false;
+      if (field) {
+        const fields = [...(s.eligibleFields ?? []), ...(s.fieldOfStudy ?? [])];
+        if (!(fields.some((f) => partial(f, field)) || partial(field, (s.tags ?? []).join(" ")))) return false;
+      }
+      if (uni && !((s.eligibleUniversities ?? []).length === 0 || (s.eligibleUniversities ?? []).some((u) => partial(u, uni)))) return false;
+      if (loc && !partial(s.location ?? s.source?.city ?? "", loc)) return false;
       if (types.length > 0) {
         const sTypes = scholarshipTypes(s);
         if (!types.some((tp) => sTypes.includes(tp))) return false;
@@ -56,16 +100,21 @@ export default function Scholarships() {
       }
       return true;
     });
-  }, [query, field, uni, loc, types, eligibleOnly, profile]);
+  }, [items, query, field, uni, loc, types, eligibleOnly, profile]);
 
   const activeFilterCount =
     (field ? 1 : 0) + (uni ? 1 : 0) + (loc ? 1 : 0) + (types.length > 0 ? 1 : 0) + (eligibleOnly ? 1 : 0);
 
   const resetFilters = () => { setField(""); setUni(""); setLoc(""); setTypes([]); setEligibleOnly(false); };
 
-  const total = SCHOLARSHIPS.length;
+  const total = index?.total ?? items.length;
   const hasFilter = activeFilterCount > 0 || query.length > 0;
-  const subtitle = hasFilter ? t("sch.showFiltered", { n: filtered.length, t: total }) : t("sch.showAll", { n: total });
+  const subtitle = hasFilter
+    ? t("sch.loadedFiltered", { n: filtered.length, l: items.length, t: total })
+    : t("sch.loadedCount", { n: items.length, t: total });
+  const visibleItems = filtered.slice(0, visibleCount);
+  const hasMoreLoadedResults = visibleCount < filtered.length;
+  const hasMoreChunks = Boolean(index && nextChunk < index.chunks.length);
 
   return (
     <AppScreen title={t("sch.title")} subtitle={subtitle}>
@@ -93,10 +142,10 @@ export default function Scholarships() {
                   <ChipRow options={[{ id: "", label: "—" }, ...AMNESOMRADE_OPTIONS.map((o) => ({ id: o, label: o }))]} value={field} onChange={setField} />
                 </FilterGroup>
                 <FilterGroup label={t("sch.f.university")}>
-                  <SearchableCombobox value={uni} onChange={setUni} options={UNIVERSITET_OPTIONS as any} placeholder={t("sch.f.university")} />
+                  <SearchableCombobox value={uni} onChange={setUni} options={UNIVERSITET_OPTIONS as unknown as string[]} placeholder={t("sch.f.university")} />
                 </FilterGroup>
                 <FilterGroup label={t("sch.f.location")}>
-                  <SearchableCombobox value={loc} onChange={setLoc} options={STUDIEORT_OPTIONS as any} placeholder={t("sch.f.location")} />
+                  <SearchableCombobox value={loc} onChange={setLoc} options={STUDIEORT_OPTIONS as unknown as string[]} placeholder={t("sch.f.location")} />
                 </FilterGroup>
                 <FilterGroup label={t("sch.f.type")}>
                   <div className="flex gap-1.5 flex-wrap">
@@ -137,13 +186,28 @@ export default function Scholarships() {
           </div>
         )}
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">{t("sch.loading")}</div>
+        ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-secondary/40 p-8 text-center">
             <p className="text-sm text-muted-foreground">{t("sch.noMatch")}</p>
-            <button onClick={resetFilters} className="mt-2 text-sm font-semibold text-primary">{t("sch.f.clear")}</button>
+            <div className="mt-3 flex flex-col gap-2">
+              {hasMoreChunks && <Button variant="outline" className="rounded-xl" onClick={loadMore} disabled={loadingMore}>{loadingMore ? t("sch.loading") : t("sch.searchMore")}</Button>}
+              <button onClick={resetFilters} className="text-sm font-semibold text-primary">{t("sch.f.clear")}</button>
+            </div>
           </div>
         ) : (
-          <div className="space-y-2.5">{filtered.map((s) => <BrowseCard key={s.id} scholarship={s} profile={profile} />)}</div>
+          <>
+            <div className="space-y-2.5">{visibleItems.map((s) => <BrowseCard key={s.id} scholarship={s} profile={profile} />)}</div>
+            <div className="space-y-2">
+              {hasMoreLoadedResults && <Button variant="outline" className="w-full rounded-xl" onClick={() => setVisibleCount((count) => count + RESULT_STEP)}>{t("sch.loadMore")}</Button>}
+              {!hasMoreLoadedResults && hasMoreChunks && (
+                <Button variant="outline" className="w-full rounded-xl" onClick={loadMore} disabled={loadingMore}>
+                  {loadingMore ? t("sch.loading") : hasFilter ? t("sch.searchMore") : t("sch.loadMore")}
+                </Button>
+              )}
+            </div>
+          </>
         )}
       </div>
     </AppScreen>
@@ -152,8 +216,8 @@ export default function Scholarships() {
 
 function BrowseCard({ scholarship: s, profile }: { scholarship: Scholarship; profile: ReturnType<typeof loadProfile> }) {
   const t = useT();
-  const deadline = new Date(s.deadline).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
   const eligible = profile ? checkEligibility(profile, s).eligible : null;
+  const category = (s.tags ?? [])[0] ?? t("sch.studentRelevant");
   return (
     <div className="block p-4 bg-card rounded-2xl border border-border/70 shadow-soft">
       <div className="flex items-start justify-between gap-2">
@@ -161,19 +225,16 @@ function BrowseCard({ scholarship: s, profile }: { scholarship: Scholarship; pro
         {eligible !== null && <EligibilityBadge eligible={eligible} />}
       </div>
       <p className="text-[12px] text-muted-foreground flex items-center gap-1 mt-0.5">
-        <Building2 className="h-3 w-3" /> {s.organization}
+        <Building2 className="h-3 w-3" /> {s.location || s.organization}
       </p>
       <div className="mt-2.5 flex items-center gap-3 text-xs flex-wrap">
         <span className="flex items-center gap-1 font-semibold text-foreground">
-          <Coins className="h-3.5 w-3.5 text-primary" />{s.amount.toLocaleString("sv-SE")} kr
+          <Tag className="h-3.5 w-3.5 text-primary" />{category}
         </span>
-        <span className="flex items-center gap-1 text-muted-foreground">
-          <Calendar className="h-3.5 w-3.5" />{deadline}
-        </span>
-        <ApplicationStatusBadge scholarship={s} />
+        <span className="text-muted-foreground">{t("sch.externalSource")}</span>
       </div>
       <div className="mt-2.5 flex flex-wrap gap-1">
-        {s.tags.slice(0, 3).map((tg) => (
+        {(s.tags ?? []).slice(0, 3).map((tg) => (
           <span key={tg} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{tg}</span>
         ))}
       </div>

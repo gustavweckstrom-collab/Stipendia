@@ -1,0 +1,1067 @@
+{
+  "total": 17487,
+  "pageSize": 100,
+  "chunks": [
+    {
+      "file": "scholarships-001.json",
+      "start": 1,
+      "end": 100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-002.json",
+      "start": 101,
+      "end": 200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-003.json",
+      "start": 201,
+      "end": 300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-004.json",
+      "start": 301,
+      "end": 400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-005.json",
+      "start": 401,
+      "end": 500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-006.json",
+      "start": 501,
+      "end": 600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-007.json",
+      "start": 601,
+      "end": 700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-008.json",
+      "start": 701,
+      "end": 800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-009.json",
+      "start": 801,
+      "end": 900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-010.json",
+      "start": 901,
+      "end": 1000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-011.json",
+      "start": 1001,
+      "end": 1100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-012.json",
+      "start": 1101,
+      "end": 1200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-013.json",
+      "start": 1201,
+      "end": 1300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-014.json",
+      "start": 1301,
+      "end": 1400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-015.json",
+      "start": 1401,
+      "end": 1500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-016.json",
+      "start": 1501,
+      "end": 1600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-017.json",
+      "start": 1601,
+      "end": 1700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-018.json",
+      "start": 1701,
+      "end": 1800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-019.json",
+      "start": 1801,
+      "end": 1900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-020.json",
+      "start": 1901,
+      "end": 2000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-021.json",
+      "start": 2001,
+      "end": 2100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-022.json",
+      "start": 2101,
+      "end": 2200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-023.json",
+      "start": 2201,
+      "end": 2300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-024.json",
+      "start": 2301,
+      "end": 2400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-025.json",
+      "start": 2401,
+      "end": 2500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-026.json",
+      "start": 2501,
+      "end": 2600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-027.json",
+      "start": 2601,
+      "end": 2700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-028.json",
+      "start": 2701,
+      "end": 2800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-029.json",
+      "start": 2801,
+      "end": 2900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-030.json",
+      "start": 2901,
+      "end": 3000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-031.json",
+      "start": 3001,
+      "end": 3100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-032.json",
+      "start": 3101,
+      "end": 3200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-033.json",
+      "start": 3201,
+      "end": 3300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-034.json",
+      "start": 3301,
+      "end": 3400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-035.json",
+      "start": 3401,
+      "end": 3500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-036.json",
+      "start": 3501,
+      "end": 3600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-037.json",
+      "start": 3601,
+      "end": 3700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-038.json",
+      "start": 3701,
+      "end": 3800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-039.json",
+      "start": 3801,
+      "end": 3900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-040.json",
+      "start": 3901,
+      "end": 4000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-041.json",
+      "start": 4001,
+      "end": 4100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-042.json",
+      "start": 4101,
+      "end": 4200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-043.json",
+      "start": 4201,
+      "end": 4300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-044.json",
+      "start": 4301,
+      "end": 4400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-045.json",
+      "start": 4401,
+      "end": 4500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-046.json",
+      "start": 4501,
+      "end": 4600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-047.json",
+      "start": 4601,
+      "end": 4700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-048.json",
+      "start": 4701,
+      "end": 4800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-049.json",
+      "start": 4801,
+      "end": 4900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-050.json",
+      "start": 4901,
+      "end": 5000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-051.json",
+      "start": 5001,
+      "end": 5100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-052.json",
+      "start": 5101,
+      "end": 5200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-053.json",
+      "start": 5201,
+      "end": 5300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-054.json",
+      "start": 5301,
+      "end": 5400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-055.json",
+      "start": 5401,
+      "end": 5500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-056.json",
+      "start": 5501,
+      "end": 5600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-057.json",
+      "start": 5601,
+      "end": 5700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-058.json",
+      "start": 5701,
+      "end": 5800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-059.json",
+      "start": 5801,
+      "end": 5900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-060.json",
+      "start": 5901,
+      "end": 6000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-061.json",
+      "start": 6001,
+      "end": 6100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-062.json",
+      "start": 6101,
+      "end": 6200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-063.json",
+      "start": 6201,
+      "end": 6300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-064.json",
+      "start": 6301,
+      "end": 6400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-065.json",
+      "start": 6401,
+      "end": 6500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-066.json",
+      "start": 6501,
+      "end": 6600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-067.json",
+      "start": 6601,
+      "end": 6700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-068.json",
+      "start": 6701,
+      "end": 6800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-069.json",
+      "start": 6801,
+      "end": 6900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-070.json",
+      "start": 6901,
+      "end": 7000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-071.json",
+      "start": 7001,
+      "end": 7100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-072.json",
+      "start": 7101,
+      "end": 7200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-073.json",
+      "start": 7201,
+      "end": 7300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-074.json",
+      "start": 7301,
+      "end": 7400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-075.json",
+      "start": 7401,
+      "end": 7500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-076.json",
+      "start": 7501,
+      "end": 7600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-077.json",
+      "start": 7601,
+      "end": 7700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-078.json",
+      "start": 7701,
+      "end": 7800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-079.json",
+      "start": 7801,
+      "end": 7900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-080.json",
+      "start": 7901,
+      "end": 8000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-081.json",
+      "start": 8001,
+      "end": 8100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-082.json",
+      "start": 8101,
+      "end": 8200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-083.json",
+      "start": 8201,
+      "end": 8300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-084.json",
+      "start": 8301,
+      "end": 8400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-085.json",
+      "start": 8401,
+      "end": 8500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-086.json",
+      "start": 8501,
+      "end": 8600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-087.json",
+      "start": 8601,
+      "end": 8700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-088.json",
+      "start": 8701,
+      "end": 8800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-089.json",
+      "start": 8801,
+      "end": 8900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-090.json",
+      "start": 8901,
+      "end": 9000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-091.json",
+      "start": 9001,
+      "end": 9100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-092.json",
+      "start": 9101,
+      "end": 9200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-093.json",
+      "start": 9201,
+      "end": 9300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-094.json",
+      "start": 9301,
+      "end": 9400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-095.json",
+      "start": 9401,
+      "end": 9500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-096.json",
+      "start": 9501,
+      "end": 9600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-097.json",
+      "start": 9601,
+      "end": 9700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-098.json",
+      "start": 9701,
+      "end": 9800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-099.json",
+      "start": 9801,
+      "end": 9900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-100.json",
+      "start": 9901,
+      "end": 10000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-101.json",
+      "start": 10001,
+      "end": 10100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-102.json",
+      "start": 10101,
+      "end": 10200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-103.json",
+      "start": 10201,
+      "end": 10300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-104.json",
+      "start": 10301,
+      "end": 10400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-105.json",
+      "start": 10401,
+      "end": 10500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-106.json",
+      "start": 10501,
+      "end": 10600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-107.json",
+      "start": 10601,
+      "end": 10700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-108.json",
+      "start": 10701,
+      "end": 10800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-109.json",
+      "start": 10801,
+      "end": 10900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-110.json",
+      "start": 10901,
+      "end": 11000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-111.json",
+      "start": 11001,
+      "end": 11100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-112.json",
+      "start": 11101,
+      "end": 11200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-113.json",
+      "start": 11201,
+      "end": 11300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-114.json",
+      "start": 11301,
+      "end": 11400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-115.json",
+      "start": 11401,
+      "end": 11500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-116.json",
+      "start": 11501,
+      "end": 11600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-117.json",
+      "start": 11601,
+      "end": 11700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-118.json",
+      "start": 11701,
+      "end": 11800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-119.json",
+      "start": 11801,
+      "end": 11900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-120.json",
+      "start": 11901,
+      "end": 12000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-121.json",
+      "start": 12001,
+      "end": 12100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-122.json",
+      "start": 12101,
+      "end": 12200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-123.json",
+      "start": 12201,
+      "end": 12300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-124.json",
+      "start": 12301,
+      "end": 12400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-125.json",
+      "start": 12401,
+      "end": 12500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-126.json",
+      "start": 12501,
+      "end": 12600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-127.json",
+      "start": 12601,
+      "end": 12700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-128.json",
+      "start": 12701,
+      "end": 12800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-129.json",
+      "start": 12801,
+      "end": 12900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-130.json",
+      "start": 12901,
+      "end": 13000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-131.json",
+      "start": 13001,
+      "end": 13100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-132.json",
+      "start": 13101,
+      "end": 13200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-133.json",
+      "start": 13201,
+      "end": 13300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-134.json",
+      "start": 13301,
+      "end": 13400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-135.json",
+      "start": 13401,
+      "end": 13500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-136.json",
+      "start": 13501,
+      "end": 13600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-137.json",
+      "start": 13601,
+      "end": 13700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-138.json",
+      "start": 13701,
+      "end": 13800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-139.json",
+      "start": 13801,
+      "end": 13900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-140.json",
+      "start": 13901,
+      "end": 14000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-141.json",
+      "start": 14001,
+      "end": 14100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-142.json",
+      "start": 14101,
+      "end": 14200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-143.json",
+      "start": 14201,
+      "end": 14300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-144.json",
+      "start": 14301,
+      "end": 14400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-145.json",
+      "start": 14401,
+      "end": 14500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-146.json",
+      "start": 14501,
+      "end": 14600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-147.json",
+      "start": 14601,
+      "end": 14700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-148.json",
+      "start": 14701,
+      "end": 14800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-149.json",
+      "start": 14801,
+      "end": 14900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-150.json",
+      "start": 14901,
+      "end": 15000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-151.json",
+      "start": 15001,
+      "end": 15100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-152.json",
+      "start": 15101,
+      "end": 15200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-153.json",
+      "start": 15201,
+      "end": 15300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-154.json",
+      "start": 15301,
+      "end": 15400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-155.json",
+      "start": 15401,
+      "end": 15500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-156.json",
+      "start": 15501,
+      "end": 15600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-157.json",
+      "start": 15601,
+      "end": 15700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-158.json",
+      "start": 15701,
+      "end": 15800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-159.json",
+      "start": 15801,
+      "end": 15900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-160.json",
+      "start": 15901,
+      "end": 16000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-161.json",
+      "start": 16001,
+      "end": 16100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-162.json",
+      "start": 16101,
+      "end": 16200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-163.json",
+      "start": 16201,
+      "end": 16300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-164.json",
+      "start": 16301,
+      "end": 16400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-165.json",
+      "start": 16401,
+      "end": 16500,
+      "count": 100
+    },
+    {
+      "file": "scholarships-166.json",
+      "start": 16501,
+      "end": 16600,
+      "count": 100
+    },
+    {
+      "file": "scholarships-167.json",
+      "start": 16601,
+      "end": 16700,
+      "count": 100
+    },
+    {
+      "file": "scholarships-168.json",
+      "start": 16701,
+      "end": 16800,
+      "count": 100
+    },
+    {
+      "file": "scholarships-169.json",
+      "start": 16801,
+      "end": 16900,
+      "count": 100
+    },
+    {
+      "file": "scholarships-170.json",
+      "start": 16901,
+      "end": 17000,
+      "count": 100
+    },
+    {
+      "file": "scholarships-171.json",
+      "start": 17001,
+      "end": 17100,
+      "count": 100
+    },
+    {
+      "file": "scholarships-172.json",
+      "start": 17101,
+      "end": 17200,
+      "count": 100
+    },
+    {
+      "file": "scholarships-173.json",
+      "start": 17201,
+      "end": 17300,
+      "count": 100
+    },
+    {
+      "file": "scholarships-174.json",
+      "start": 17301,
+      "end": 17400,
+      "count": 100
+    },
+    {
+      "file": "scholarships-175.json",
+      "start": 17401,
+      "end": 17487,
+      "count": 87
+    }
+  ],
+  "fields": [
+    "Ekonomi / Handel",
+    "Humaniora / Språk",
+    "Juridik",
+    "Konst / Kultur / Design",
+    "Medicin / Vård",
+    "Naturvetenskap",
+    "Pedagogik / Lärarutbildning",
+    "Teknik / Ingenjörsvetenskap"
+  ],
+  "generatedFrom": "Alla sveriges stiftelser för studenter.xlsx"
+}

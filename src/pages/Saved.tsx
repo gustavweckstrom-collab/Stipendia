@@ -1,16 +1,18 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { SCHOLARSHIPS } from "@/data/scholarships";
+import { Scholarship } from "@/data/scholarships";
+import { loadScholarshipsByIds } from "@/lib/scholarshipData";
 import { loadSavedIds, toggleSaved } from "@/lib/storage";
 import AppScreen from "@/components/layout/AppScreen";
 import { Button } from "@/components/ui/button";
-import { Bookmark, BookmarkX, Building2, Coins, Calendar, ChevronRight } from "lucide-react";
+import { Bookmark, BookmarkX, Building2, ChevronRight, Tag } from "lucide-react";
 import { useT } from "@/lib/i18n";
-import { ApplicationStatusBadge } from "@/components/StatusBadge";
 
 export default function Saved() {
   const t = useT();
   const [ids, setIds] = useState<string[]>([]);
+  const [items, setItems] = useState<Scholarship[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const refresh = () => setIds(loadSavedIds());
@@ -19,11 +21,22 @@ export default function Saved() {
     return () => window.removeEventListener("stipendia:update", refresh);
   }, []);
 
-  const items = ids.map((id) => SCHOLARSHIPS.find((s) => s.id === id)).filter(Boolean) as typeof SCHOLARSHIPS;
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    loadScholarshipsByIds(ids).then((items) => {
+      if (!cancelled) setItems(items);
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [ids]);
 
   return (
     <AppScreen title={t("saved.title")}>
-      {items.length === 0 ? (
+      {loading ? (
+        <div className="rounded-3xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">{t("sch.loading")}</div>
+      ) : items.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border bg-secondary/40 p-8 text-center">
           <div className="mx-auto h-14 w-14 rounded-2xl bg-accent-soft text-accent-foreground flex items-center justify-center mb-3">
             <Bookmark className="h-7 w-7" />
@@ -36,7 +49,7 @@ export default function Saved() {
       ) : (
         <div className="space-y-2.5">
           {items.map((s) => {
-            const deadline = new Date(s.deadline).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+            const category = (s.tags ?? [])[0] ?? t("sch.studentRelevant");
             return (
               <div key={s.id} className="block p-4 bg-card rounded-2xl border border-border/70 shadow-soft">
                 <div className="flex items-start justify-between gap-2">
@@ -49,9 +62,8 @@ export default function Saved() {
                   <Building2 className="h-3 w-3" /> {s.organization}
                 </p>
                 <div className="mt-2.5 flex items-center gap-3 text-xs flex-wrap">
-                  <span className="flex items-center gap-1 font-semibold text-foreground"><Coins className="h-3.5 w-3.5 text-primary" />{s.amount.toLocaleString("sv-SE")} kr</span>
-                  <span className="flex items-center gap-1 text-muted-foreground"><Calendar className="h-3.5 w-3.5" />{deadline}</span>
-                  <ApplicationStatusBadge scholarship={s} />
+                  <span className="flex items-center gap-1 font-semibold text-foreground"><Tag className="h-3.5 w-3.5 text-primary" />{category}</span>
+                  <span className="text-muted-foreground">{t("sch.externalSource")}</span>
                 </div>
                 <Button asChild size="sm" variant="outline" className="mt-3 w-full rounded-xl gap-1">
                   <Link to={`/stipendier/${s.id}`}>{t("sch.details")} <ChevronRight className="h-4 w-4" /></Link>
