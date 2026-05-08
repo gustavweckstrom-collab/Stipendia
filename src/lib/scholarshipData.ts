@@ -36,27 +36,34 @@ export function chunkIndexForScholarshipId(id: string, index: ScholarshipIndex):
   return index.chunks[chunkIndex] ? chunkIndex : null;
 }
 
+function chunkFileForScholarshipId(id: string, index: ScholarshipIndex): string | null {
+  const mappedFile = index.idToChunk?.[id];
+  if (mappedFile) return mappedFile;
+  const chunkIndex = chunkIndexForScholarshipId(id, index);
+  return chunkIndex === null ? null : index.chunks[chunkIndex]?.file ?? null;
+}
+
 export async function loadScholarshipById(id: string): Promise<Scholarship | null> {
   const index = await loadScholarshipIndex();
-  const chunkIndex = chunkIndexForScholarshipId(id, index);
-  if (chunkIndex === null) return null;
-  const chunk = await loadScholarshipChunk(index.chunks[chunkIndex].file);
+  const chunkFile = chunkFileForScholarshipId(id, index);
+  if (!chunkFile) return null;
+  const chunk = await loadScholarshipChunk(chunkFile);
   return chunk.find((item) => item.id === id) ?? null;
 }
 
 export async function loadScholarshipsByIds(ids: string[]): Promise<Scholarship[]> {
   const index = await loadScholarshipIndex();
-  const byChunk = new Map<number, Set<string>>();
+  const byChunk = new Map<string, Set<string>>();
   ids.forEach((id) => {
-    const chunkIndex = chunkIndexForScholarshipId(id, index);
-    if (chunkIndex !== null) {
-      if (!byChunk.has(chunkIndex)) byChunk.set(chunkIndex, new Set());
-      byChunk.get(chunkIndex)!.add(id);
+    const chunkFile = chunkFileForScholarshipId(id, index);
+    if (chunkFile) {
+      if (!byChunk.has(chunkFile)) byChunk.set(chunkFile, new Set());
+      byChunk.get(chunkFile)!.add(id);
     }
   });
   const results: Scholarship[] = [];
-  await Promise.all(Array.from(byChunk.entries()).map(async ([chunkIndex, idSet]) => {
-    const chunk = await loadScholarshipChunk(index.chunks[chunkIndex].file);
+  await Promise.all(Array.from(byChunk.entries()).map(async ([chunkFile, idSet]) => {
+    const chunk = await loadScholarshipChunk(chunkFile);
     chunk.forEach((item) => {
       if (idSet.has(item.id)) results.push(item);
     });

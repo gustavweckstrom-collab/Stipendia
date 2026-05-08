@@ -47,5 +47,10 @@ export interface ScholarshipIndex {
   fields: string[];
   fieldChunks?: Record<string, { count: number; chunks: string[] }>;
   locations: string[];
+  idToChunk?: Record<string, string>;
+  totalOriginalCount?: number;
+  totalFilteredCount?: number;
+  filterDescription?: string;
+  generatedAt?: string;
   generatedFrom: string;
 }
