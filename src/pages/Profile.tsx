@@ -18,7 +18,7 @@ import {
   STUDIEORT_OPTIONS,
   HEMORT_SUGGESTIONS,
   AMNESOMRADE_OPTIONS,
-  TERMIN_OPTIONS,
+  EDUCATION_LEVEL_OPTIONS,
   SYFTE_OPTIONS,
   EKONOMI_OPTIONS,
   DOC_TYPES,
@@ -77,7 +77,7 @@ function ProfileSummary({ profile, onEdit, onEditDocs }: { profile: StudentProfi
     { label: t("profile.university"), value: profile.universitet },
     { label: t("profile.studyCity"), value: profile.studieort },
     { label: t("profile.field"), value: optionLabel(profile.amnesomrade) },
-    { label: t("profile.term"), value: optionLabel(profile.termin) },
+    { label: t("profile.educationLevel"), value: optionLabel(profile.utbildningsniva) },
     { label: t("profile.purpose"), value: optionLabel(purposeLabel ?? "") },
     { label: t("profile.economy"), value: optionLabel(profile.ekonomi) },
   ];
@@ -192,6 +192,7 @@ function ProfileWizard({ initial, initialStep, onCancel, onSaved }: { initial: S
       if (!profile.universitet.trim()) e.universitet = t("v.uniReq");
       if (!profile.program.trim()) e.program = t("v.programReq");
       if (!profile.amnesomrade.trim()) e.amnesomrade = t("v.fieldReq");
+      if (!profile.utbildningsniva.trim()) e.utbildningsniva = t("v.educationReq");
       if (!profile.studieort.trim()) e.studieort = t("v.studyReq");
     }
     if (step === 2) {
@@ -296,11 +297,11 @@ function ProfileWizard({ initial, initialStep, onCancel, onSaved }: { initial: S
                 </Select>
               </Field>
               <div className="grid grid-cols-2 gap-3">
-                <Field label={t("profile.term")}>
-                  <Select value={profile.termin} onValueChange={(v) => update("termin", v)}>
+                <Field label={`${t("profile.educationLevel")} *`} error={errors.utbildningsniva}>
+                  <Select value={profile.utbildningsniva} onValueChange={(v) => update("utbildningsniva", v)}>
                     <SelectTrigger><SelectValue placeholder={t("profile.selectPh")} /></SelectTrigger>
                     <SelectContent>
-                      {TERMIN_OPTIONS.map((tt) => <SelectItem key={tt} value={tt}>{optionLabel(tt)}</SelectItem>)}
+                      {EDUCATION_LEVEL_OPTIONS.map((level) => <SelectItem key={level} value={level}>{optionLabel(level)}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </Field>

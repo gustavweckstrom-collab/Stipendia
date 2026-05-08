@@ -211,6 +211,46 @@ export function hasDirectApplicationTarget(scholarship: Scholarship): boolean {
   return Boolean(applicationTargetUrl(scholarship));
 }
 
+export function scholarshipMatchesTravel(scholarship: Scholarship): boolean {
+  const text = normalizeText([
+    scholarship.name,
+    scholarship.description,
+    ...(scholarship.criteria ?? []),
+    ...(scholarship.tags ?? []),
+    ...(scholarship.purposes ?? []),
+  ].join(" "));
+  return hasText(text, [
+    "resa",
+    "resestipendium",
+    "resestipendier",
+    "utlandsstudier",
+    "studier utomlands",
+    "studieresa",
+    "praktik utomlands",
+    "utbyte",
+    "utbytesstudier",
+    "fältstudier",
+    "faltstudier",
+  ]);
+}
+
+export function scholarshipMatchesEducationLevel(scholarship: Scholarship, level: string): boolean {
+  const normalizedLevel = normalizeText(level);
+  if (!normalizedLevel) return true;
+  const text = normalizeText([
+    scholarship.educationLevel,
+    scholarship.name,
+    scholarship.description,
+    ...(scholarship.criteria ?? []),
+    ...(scholarship.tags ?? []),
+  ].join(" "));
+  const doctoralMatch = hasText(text, ["doktorand", "doktorander", "forskarutbildning", "forskningsnivå", "forskningsniva", "forskning", "forskningsprojekt"]);
+  if (normalizedLevel.includes("doktor")) return doctoralMatch;
+  if (normalizedLevel.includes("grund") && normalizedLevel.includes("avancerad")) return !doctoralMatch;
+  if (normalizedLevel.includes("avancerad")) return hasText(text, ["avancerad nivå", "avancerad niva", "master", "magister"]);
+  return hasText(text, ["grundnivå", "grundniva", "kandidat", "bachelor", "grundutbildning", "universitet", "högskola", "hogskola", "studerande", "student"]);
+}
+
 export function externalApplicationUrl(scholarship: Scholarship): string {
   const directUrl = applicationTargetUrl(scholarship);
   if (directUrl) return directUrl;

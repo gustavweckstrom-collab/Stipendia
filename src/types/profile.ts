@@ -10,7 +10,8 @@ export interface StudentProfile {
   universitet: string;
   program: string;
   amnesomrade: string;
-  termin: string;
+  termin?: string;
+  utbildningsniva: string;
   studieort: string;
   hemort: string;
   kon: string;
@@ -37,6 +38,7 @@ export const EMPTY_PROFILE: StudentProfile = {
   program: "",
   amnesomrade: "",
   termin: "",
+  utbildningsniva: "",
   studieort: "",
   hemort: "",
   kon: "",
@@ -65,7 +67,7 @@ export type SavedDraft = SavedApplication;
 
 export const PROFILE_REQUIRED_FIELDS: (keyof StudentProfile)[] = [
   "firstName", "lastName", "kon", "hemort",
-  "universitet", "program", "amnesomrade", "termin", "studieort",
+  "universitet", "program", "amnesomrade", "utbildningsniva", "studieort",
   "syfte", "ekonomi",
 ];
 
@@ -133,10 +135,10 @@ export const AMNESOMRADE_OPTIONS = [
   "Annat",
 ] as const;
 
-export const TERMIN_OPTIONS = [
-  "Termin 1", "Termin 2", "Termin 3", "Termin 4", "Termin 5",
-  "Termin 6", "Termin 7", "Termin 8", "Termin 9 eller högre",
-  "Masterstudent", "Doktorand",
+export const EDUCATION_LEVEL_OPTIONS = [
+  "Grundnivå",
+  "Avancerad nivå",
+  "Doktorand/forskningsnivå",
 ] as const;
 
 export const SYFTE_OPTIONS = [

@@ -26,6 +26,12 @@ export function loadProfile(): StudentProfile | null {
     // migrate old ekonomiKommentar -> omDig
     if (p.ekonomiKommentar && !p.omDig) p.omDig = p.ekonomiKommentar;
     delete p.ekonomiKommentar;
+    if (!p.utbildningsniva) {
+      const oldTerm = String(p.termin ?? "").toLowerCase();
+      if (oldTerm.includes("doktor")) p.utbildningsniva = "Doktorand/forskningsnivå";
+      else if (oldTerm.includes("master")) p.utbildningsniva = "Avancerad nivå";
+      else p.utbildningsniva = "";
+    }
     if (!Array.isArray(p.uploads)) p.uploads = [];
     const allowedDocTypes = new Set(DOC_TYPES.map(({ k }) => k));
     p.uploads = (p.uploads as StoredUpload[]).filter((u) => typeof u.documentType === "string" && allowedDocTypes.has(u.documentType as any));

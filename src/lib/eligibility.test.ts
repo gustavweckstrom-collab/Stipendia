@@ -35,7 +35,7 @@ const profile = (overrides: Partial<StudentProfile> = {}): StudentProfile => ({
   universitet: "Chalmers tekniska högskola",
   program: "Civilingenjör Datateknik",
   amnesomrade: "Teknik / Ingenjörsvetenskap",
-  termin: "Termin 4",
+  utbildningsniva: "Grundnivå",
   studieort: "Göteborg",
   syfte: "Extra ekonomiskt stöd under studierna",
   ekonomi: EKONOMI_OPTIONS[1],

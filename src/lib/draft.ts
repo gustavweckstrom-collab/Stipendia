@@ -23,7 +23,7 @@ export function generateDraft(
   const fullName = `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim() || (en ? "[Your name]" : "[Ditt namn]");
   const program = sentence(profile.program) || (en ? "my programme" : "min utbildning");
   const university = sentence(profile.universitet) || (en ? "my university" : "mitt lärosäte");
-  const term = sentence(profile.termin);
+  const educationLevel = sentence(profile.utbildningsniva);
   const field = sentence(profile.amnesomrade);
   const purpose = sentence(profile.syfte);
   const engagement = sentence(profile.engagemang);
@@ -39,8 +39,8 @@ export function generateDraft(
   const blockers = eligibility?.blockers.slice(0, 2) ?? [];
 
   if (en) {
-    const studyLine = term
-      ? `I am currently in ${optionLabel(lang, term).toLowerCase()} of ${program} at ${university}.`
+    const studyLine = educationLevel
+      ? `I am studying ${program} at ${university} at ${optionLabel(lang, educationLevel).toLowerCase()}.`
       : `I am studying ${program} at ${university}.`;
     const personalParts = [
       about && `A short personal note about me: ${about}`,
@@ -81,8 +81,8 @@ ${fullName}
 `;
   }
 
-  const studyLine = term
-    ? `Jag läser ${program} vid ${university} och befinner mig i ${optionLabel(lang, term).toLowerCase()}.`
+  const studyLine = educationLevel
+    ? `Jag läser ${program} vid ${university} på ${optionLabel(lang, educationLevel).toLowerCase()}.`
     : `Jag läser ${program} vid ${university}.`;
   const personalParts = [
     about && `Lite kort om mig: ${about}`,
