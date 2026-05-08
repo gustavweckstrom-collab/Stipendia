@@ -6,6 +6,8 @@ export interface ScholarshipSource {
   postalCode?: string | null;
   city?: string | null;
   phone?: string | null;
+  sourceUrl?: string | null;
+  officialWebsite?: string | null;
 }
 
 export interface Scholarship {
@@ -21,6 +23,10 @@ export interface Scholarship {
   amount: number | null;
   deadline: string | null;
   applicationUrl: string | null;
+  sourceUrl?: string | null;
+  officialWebsite?: string | null;
+  lastChecked?: string | null;
+  externalInfoStatus?: "direct" | "search-fallback" | "unknown" | null;
   source: ScholarshipSource;
   tags: string[];
   criteria: string[];

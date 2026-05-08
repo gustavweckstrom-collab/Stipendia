@@ -7,13 +7,15 @@ import {
   loadScholarshipsByIds,
   looseIncludes,
   normalizeText,
+  eligibilityHighlights,
+  hasDirectApplicationTarget,
   primaryScholarshipCategory,
   scholarshipLocationLabel,
 } from "@/lib/scholarshipData";
 import AppScreen from "@/components/layout/AppScreen";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Bookmark, BookmarkCheck, ChevronRight, ExternalLink, MapPin, SlidersHorizontal, Tag, X, SearchX } from "lucide-react";
+import { Search, Bookmark, BookmarkCheck, CheckCircle2, ChevronRight, ExternalLink, GraduationCap, MapPin, SlidersHorizontal, Tag, X, SearchX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOptionLabel, useT } from "@/lib/i18n";
 import { Switch } from "@/components/ui/switch";
@@ -368,6 +370,8 @@ function BrowseCard({
   const eligible = profile ? checkEligibility(profile, s).eligible : null;
   const category = primaryScholarshipCategory(s) ?? t("sch.studentRelevant");
   const location = scholarshipLocationLabel(s);
+  const highlights = eligibilityHighlights(s).slice(0, 3);
+  const directApplication = hasDirectApplicationTarget(s);
   return (
     <Link to={`/stipendier/${s.id}`} className="group block rounded-[26px] border border-border/70 bg-card p-4 shadow-soft transition-all active:scale-[0.99] hover:shadow-card">
       <div className="flex items-start justify-between gap-2">
@@ -387,9 +391,22 @@ function BrowseCard({
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         <MetaPill icon={Tag} label={category} tone="primary" />
-        <MetaPill icon={ExternalLink} label={t("sch.externalSourceShort")} />
+        <MetaPill icon={GraduationCap} label={t("sch.studentRelevantShort")} tone="success" />
+        {!directApplication && <MetaPill icon={ExternalLink} label={t("sch.externalSourceShort")} />}
         {saved && <MetaPill icon={BookmarkCheck} label={t("nav.saved")} tone="success" />}
         {applied && <ApplicationStateBadge applied />}
+      </div>
+
+      <div className="mt-3 rounded-2xl border border-border/60 bg-secondary/45 px-3 py-2.5">
+        <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{t("sch.cardEligibility")}</p>
+        <ul className="space-y-1">
+          {highlights.map((point) => (
+            <li key={point} className="flex gap-1.5 text-[12px] leading-snug text-foreground/80">
+              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+              <span>{point}</span>
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">

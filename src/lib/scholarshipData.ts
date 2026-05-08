@@ -1,4 +1,5 @@
 import { Scholarship, ScholarshipIndex } from "@/data/scholarships";
+import { getLang } from "@/lib/i18n";
 
 const DATA_ROOT = `${import.meta.env.BASE_URL}data/scholarships/`;
 
@@ -142,8 +143,77 @@ export function distinctEligibilityRequirements(scholarship: Scholarship): strin
     });
 }
 
+function currentLangLabels() {
+  const en = getLang() === "en";
+  return {
+    university: en ? "University or college studies" : "Universitet eller högskola",
+    student: en ? "Student" : "Student",
+    need: en ? "Financial need may matter" : "Ekonomiskt behov kan vara relevant",
+    fieldPrefix: en ? "Study field" : "Ämnesområde",
+    locationPrefix: en ? "Local or regional connection" : "Koppling till ort eller region",
+    exchange: en ? "Studies abroad or exchange" : "Utlandsstudier eller utbyte",
+    thesis: en ? "Thesis or degree project" : "Examensarbete eller uppsats",
+    practice: en ? "Internship or practice" : "Praktik",
+    engagement: en ? "Engagement or volunteer work" : "Engagemang eller ideellt arbete",
+    review: en ? "Eligibility needs review" : "Behörighet behöver kontrolleras",
+  };
+}
+
+function hasText(text: string, patterns: string[]) {
+  return patterns.some((pattern) => text.includes(normalizeText(pattern)));
+}
+
+export function eligibilityHighlights(scholarship: Scholarship): string[] {
+  const labels = currentLangLabels();
+  const text = normalizeText([
+    scholarship.name,
+    scholarship.description,
+    ...(scholarship.criteria ?? []),
+    ...(scholarship.targetGroup ?? []),
+    ...(scholarship.tags ?? []),
+    ...(scholarship.purposes ?? []),
+  ].join(" "));
+  const highlights: string[] = [];
+  const add = (value: string | null | undefined) => {
+    const label = cleanLabel(value);
+    if (!label) return;
+    const normalized = normalizeText(label);
+    if (!highlights.some((item) => normalizeText(item) === normalized)) highlights.push(label);
+  };
+
+  if (hasText(text, ["universitet", "högskola", "hogskola", "eftergymnasial", "akademiska studier", "högre utbildning", "hogre utbildning"])) {
+    add(labels.university);
+  } else if (hasText(text, ["student", "studenter", "studerande"])) {
+    add(labels.student);
+  }
+
+  if (scholarship.needBased || (scholarship.targetGroup ?? []).some((group) => normalizeText(group).includes("behov"))) add(labels.need);
+  if ((scholarship.fieldOfStudy ?? []).length > 0) add(`${labels.fieldPrefix}: ${scholarship.fieldOfStudy.slice(0, 2).map(cleanLabel).join(", ")}`);
+
+  const location = scholarshipLocationLabel(scholarship);
+  if (location && hasText(text, ["från", "bosatt", "hemmahörande", "anknytning", "född", "uppväxt", "kommun", "län", "nation"])) {
+    add(`${labels.locationPrefix}: ${location}`);
+  }
+
+  if (hasText(text, ["utlandsstudier", "utbyte", "utbytesstudier", "studier utomlands"])) add(labels.exchange);
+  if (hasText(text, ["examensarbete", "uppsatsarbete", "kandidatuppsats", "masteruppsats"])) add(labels.thesis);
+  if (hasText(text, ["praktik"])) add(labels.practice);
+  if (scholarship.engagementRequired) add(labels.engagement);
+
+  return highlights.length > 0 ? highlights : [labels.review];
+}
+
+export function applicationTargetUrl(scholarship: Scholarship): string | null {
+  return scholarship.applicationUrl || scholarship.officialWebsite || scholarship.sourceUrl || scholarship.source?.officialWebsite || scholarship.source?.sourceUrl || null;
+}
+
+export function hasDirectApplicationTarget(scholarship: Scholarship): boolean {
+  return Boolean(applicationTargetUrl(scholarship));
+}
+
 export function externalApplicationUrl(scholarship: Scholarship): string {
-  if (scholarship.applicationUrl) return scholarship.applicationUrl;
-  const query = encodeURIComponent(`${scholarship.name} stipendium ansokan stiftelse`);
+  const directUrl = applicationTargetUrl(scholarship);
+  if (directUrl) return directUrl;
+  const query = encodeURIComponent(`${scholarship.name} stipendium ansökan`);
   return `https://www.google.com/search?q=${query}`;
 }
