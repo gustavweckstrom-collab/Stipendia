@@ -11,9 +11,17 @@ const PAGE_SIZE = 100;
 const FILTER_DESCRIPTION = "Endast stipendier relevanta för universitets- och högskolestudenter";
 
 const DEEPL_API_KEY = "18eb8364-ad65-4888-be29-c677376400b9:fx";
+const CACHE_FILE = path.join(ROOT, "scripts", "translation-cache.json");
+
+let translationCache = {};
+if (fs.existsSync(CACHE_FILE)) {
+  translationCache = JSON.parse(fs.readFileSync(CACHE_FILE, "utf8"));
+}
 
 async function translateText(text) {
   if (!text) return null;
+  if (translationCache[text]) return translationCache[text];
+
   try {
     const response = await fetch("https://api-free.deepl.com/v2/translate", {
       method: "POST",
@@ -21,18 +29,19 @@ async function translateText(text) {
         "Authorization": `DeepL-Auth-Key ${DEEPL_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        text: [text],
-        target_lang: "EN"
-      })
+      body: JSON.stringify({ text: [text], target_lang: "EN" })
     });
-    
-    if (!response.ok) return text; // Fallback to Swedish if API fails
+
+    if (!response.ok) return text;
+
     const data = await response.json();
-    return data.translations[0].text;
+    const translated = data.translations[0].text;
+    translationCache[text] = translated;
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(translationCache, null, 2));
+    return translated;
   } catch (e) {
     console.error("Translation error:", e);
-    return text; // Fallback to Swedish
+    return text;
   }
 }
 
@@ -538,9 +547,10 @@ function deriveTargetGroup(text) {
   return target;
 }
 
-function deriveScholarship(row, index) {
+async function deriveScholarship(row, index) {
   const name = cleanText(row.NAMN || row.Name || `Stiftelse ${index + 1}`);
   const description = cleanText(row.ANDAMAL);
+  const descriptionEn = await translateText(description);
   const text = normalizeText([name, description, row.ORT].join(" "));
   const fieldOfStudy = extractMatches(text, FIELD_RULES);
   const targetGroup = deriveTargetGroup(text);
@@ -560,6 +570,7 @@ function deriveScholarship(row, index) {
     name,
     organization: name,
     description,
+    descriptionEn,
     targetGroup,
     requirements: [],
     location,
@@ -654,12 +665,16 @@ function writeData(items, totalOriginalCount) {
   fs.writeFileSync(path.join(OUT_DIR, "index.json"), `${JSON.stringify(index, null, 2)}\n`, "utf8");
 }
 
-function main() {
+async function main() {
   const entries = readZipEntries(SOURCE_FILE);
   const sharedStrings = parseSharedStrings(entries.get("xl/sharedStrings.xml"));
   const rows = parseSheet(entries.get("xl/worksheets/sheet1.xml"), sharedStrings);
   const filteredRows = rows.filter(isRelevantForUniversityStudent);
-  const scholarships = filteredRows.map(deriveScholarship);
+  const scholarships = [];
+  for (let i = 0; i < filteredRows.length; i++) {
+    const sch = await deriveScholarship(filteredRows[i], i);
+    scholarships.push(sch);
+  }
   writeData(scholarships, rows.length);
 
   console.log(`Kolumner: ${Object.keys(rows[0] ?? {}).join(", ")}`);
