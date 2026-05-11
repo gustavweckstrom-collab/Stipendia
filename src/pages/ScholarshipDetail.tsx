@@ -24,7 +24,7 @@ const documentLabelToType = new Map(DOC_TYPES.map(({ k, label }) => [label, k]))
 
 export default function ScholarshipDetail() {
   const t = useT();
-  const lang = useLand();
+  const lang = useLang();
   const { id } = useParams();
   const profile = loadProfile();
   const [scholarship, setScholarship] = useState<Scholarship | null>(null);
