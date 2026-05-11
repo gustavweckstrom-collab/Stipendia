@@ -15,7 +15,7 @@ import AppScreen from "@/components/layout/AppScreen";
 import { Button } from "@/components/ui/button";
 import { Building2, ExternalLink, FileText, CheckCircle2, AlertCircle, Bookmark, BookmarkCheck, Check, Info, Tag, GraduationCap } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useT } from "@/lib/i18n";
+import { useT, useLang } from "@/lib/i18n";
 import { ApplicationStateBadge, EligibilityBadge } from "@/components/StatusBadge";
 import { DOC_TYPES } from "@/types/profile";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ const documentLabelToType = new Map(DOC_TYPES.map(({ k, label }) => [label, k]))
 
 export default function ScholarshipDetail() {
   const t = useT();
+  const lang = useLand();
   const { id } = useParams();
   const profile = loadProfile();
   const [scholarship, setScholarship] = useState<Scholarship | null>(null);
@@ -128,7 +129,7 @@ export default function ScholarshipDetail() {
         )}
 
         <Section title={t("sch.description")}>
-          <p className="text-sm text-foreground/85 leading-relaxed">{s.description || t("common.missing")}</p>
+          <p className="text-sm text-foreground/85 leading-relaxed">{lang == "en" && s.descriptionEn ? s.descriptionEn : (s.description || t("common.missing"))}</p>
         </Section>
 
         <Section title={t("sch.whoCanApply")}>
