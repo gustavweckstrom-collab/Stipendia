@@ -31,7 +31,7 @@ import { loadAppliedIds, loadProfile, loadSavedIds } from "@/lib/storage";
 import { ApplicationStateBadge, EligibilityBadge } from "@/components/StatusBadge";
 import { StipendiaIllustration } from "@/components/visual/StipendiaIllustration";
 
-const RESULT_STEP = 100;
+const RESULT_STEP = 50;
 const FILTER_EDUCATION_LEVEL_OPTIONS = ["Grundnivå / avancerad nivå", "Doktorand/forskningsnivå"] as const;
 
 type ScholarshipFilters = {
