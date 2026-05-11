@@ -7,7 +7,7 @@ const FAQS_SV = [
   { q: "Måste jag ha toppbetyg?", a: "Nej. En del stipendier baseras på studieresultat, men många väger även in engagemang, ekonomiskt behov, ämnesområde eller bakgrund." },
   { q: "Kan jag söka flera stipendier?", a: "Ja, du får söka så många stipendier du vill." },
   { q: "Är stipendier skattefria?", a: "Stipendier för studier är oftast skattefria i Sverige om de inte är ersättning för utfört arbete. Kontrollera alltid villkoren och Skatteverkets regler." },
-  { q: "Hur skriver jag en bra ansökan?", a: "Var konkret om varför du söker, vad pengarna ska användas till och hur du uppfyller kriterierna. Stipendia hjälper dig skapa ett utkast." },
+  { q: "Hur skriver jag en bra ansökan?", a: "Var konkret om varför du söker, vad pengarna ska användas till och hur du uppfyller kriterierna. Kontrollera alltid aktuell information hos stiftelsen innan du skickar in." },
   { q: "Sparas mina uppgifter?", a: "All din profilinformation lagras endast lokalt i din webbläsare. Inget skickas till någon server." },
 ];
 
@@ -16,7 +16,7 @@ const FAQS_EN = [
   { q: "Do I need top grades?", a: "No. Some scholarships are based on grades, but many also weigh engagement, financial need, study field or background." },
   { q: "Can I apply for several scholarships?", a: "Yes — you may apply for as many as you like." },
   { q: "Are scholarships tax-free?", a: "Study scholarships are usually tax-free in Sweden if they aren't compensation for work. Always check the rules." },
-  { q: "How do I write a good application?", a: "Be specific about why you're applying, what the funds will be used for, and how you meet the criteria. Stipendia helps you draft an application." },
+  { q: "How do I write a good application?", a: "Be specific about why you're applying, what the funds will be used for, and how you meet the criteria. Always check current information with the foundation before submitting." },
   { q: "Is my data stored?", a: "All your profile data is stored locally in your browser. Nothing is sent to a server." },
 ];
 

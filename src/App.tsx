@@ -10,8 +10,6 @@ const Home = lazy(() => import("./pages/Home"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Scholarships = lazy(() => import("./pages/Scholarships"));
 const ScholarshipDetail = lazy(() => import("./pages/ScholarshipDetail"));
-const DraftPage = lazy(() => import("./pages/DraftPage"));
-const Drafts = lazy(() => import("./pages/Drafts"));
 const Matches = lazy(() => import("./pages/Matches"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
@@ -34,9 +32,6 @@ const App = () => (
               <Route path="/stipendier/:id" element={<ScholarshipDetail />} />
               <Route path="/matchningar" element={<Matches />} />
               <Route path="/sparade" element={<Navigate to="/stipendier?sparade=1" replace />} />
-              <Route path="/utkast" element={<Drafts />} />
-              <Route path="/ansokningar" element={<Drafts />} />
-              <Route path="/utkast/:id" element={<DraftPage />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/installningar" element={<SettingsPage />} />
               <Route path="*" element={<NotFound />} />

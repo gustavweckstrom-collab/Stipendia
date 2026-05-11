@@ -13,7 +13,6 @@ export default function Header() {
     { to: "/profil", label: t("nav.profile") },
     { to: "/stipendier", label: t("nav.scholarships") },
     { to: "/matchningar", label: t("nav.matches") },
-    { to: "/utkast", label: t("nav.drafts") },
   ];
 
   return (

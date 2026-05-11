@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AppScreen from "@/components/layout/AppScreen";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowRight, CheckCircle2, Shield, Upload, FileText, X, Pencil, FilePlus2, User, FolderOpen, Settings } from "lucide-react";
+import { ArrowRight, CheckCircle2, Pencil, Settings, Shield, User } from "lucide-react";
 import { SearchableCombobox } from "@/components/ui/SearchableCombobox";
 import {
   EMPTY_PROFILE,
@@ -21,8 +21,6 @@ import {
   EDUCATION_LEVEL_OPTIONS,
   SYFTE_OPTIONS,
   EKONOMI_OPTIONS,
-  DOC_TYPES,
-  DocumentUpload,
   isProfileComplete,
 } from "@/types/profile";
 import { loadProfile, saveProfile } from "@/lib/storage";
@@ -30,29 +28,26 @@ import { validateName } from "@/lib/validation";
 import { useOptionLabel, useT } from "@/lib/i18n";
 import { toast } from "sonner";
 
-const STEP_COUNT = 4;
+const STEP_COUNT = 3;
 
 export default function Profile() {
-  const t = useT();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const editing = params.get("edit") === "1" || params.get("edit") === "docs";
-  const initialStep = params.get("edit") === "docs" ? 3 : 0;
-
-  const [profile, setProfile] = useState<StudentProfile | null>(loadProfile());
+  const [profile] = useState<StudentProfile | null>(loadProfile());
   const showForm = !profile || editing;
 
   if (!showForm && profile) {
-    return <ProfileSummary profile={profile} onEdit={() => setParams({ edit: "1" })} onEditDocs={() => setParams({ edit: "docs" })} />;
+    return <ProfileSummary profile={profile} onEdit={() => setParams({ edit: "1" })} />;
   }
 
   return (
     <ProfileWizard
       initial={profile ?? EMPTY_PROFILE}
-      initialStep={initialStep}
       onCancel={() => {
         setParams({});
         if (profile && isProfileComplete(profile)) navigate("/profil");
+        else navigate("/");
       }}
       onSaved={() => {
         setParams({});
@@ -62,13 +57,10 @@ export default function Profile() {
   );
 }
 
-/* ----------------- Summary ----------------- */
-
-function ProfileSummary({ profile, onEdit, onEditDocs }: { profile: StudentProfile; onEdit: () => void; onEditDocs: () => void }) {
+function ProfileSummary({ profile, onEdit }: { profile: StudentProfile; onEdit: () => void }) {
   const t = useT();
   const navigate = useNavigate();
   const optionLabel = useOptionLabel();
-  const purposeLabel = SYFTE_OPTIONS.find((o) => o.value === profile.syfte)?.value ?? profile.syfte;
   const rows: { label: string; value: string }[] = [
     { label: t("profile.firstName"), value: profile.firstName },
     { label: t("profile.lastName"), value: profile.lastName },
@@ -78,15 +70,14 @@ function ProfileSummary({ profile, onEdit, onEditDocs }: { profile: StudentProfi
     { label: t("profile.studyCity"), value: profile.studieort },
     { label: t("profile.field"), value: optionLabel(profile.amnesomrade) },
     { label: t("profile.educationLevel"), value: optionLabel(profile.utbildningsniva) },
-    { label: t("profile.purpose"), value: optionLabel(purposeLabel ?? "") },
+    { label: t("profile.purpose"), value: optionLabel(profile.syfte) },
     { label: t("profile.economy"), value: optionLabel(profile.ekonomi) },
   ];
-  const uploads = profile.uploads ?? [];
 
   return (
     <AppScreen
       title={t("profile.summary")}
-      subtitle={t("profile.aiSummary")}
+      subtitle={t("profile.profileSummary")}
       right={
         <button onClick={() => navigate("/installningar")} className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-secondary text-foreground" aria-label={t("settings.title")}>
           <Settings className="h-5 w-5" />
@@ -108,7 +99,7 @@ function ProfileSummary({ profile, onEdit, onEditDocs }: { profile: StudentProfi
         <div className="rounded-2xl bg-card border border-border/60 p-4 text-[12px] text-foreground/80 leading-relaxed shadow-soft">
           <div className="flex items-start gap-2">
             <Shield className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <p>{t("profile.aiInfo")}</p>
+            <p>{t("profile.profileInfo")}</p>
           </div>
         </div>
 
@@ -123,48 +114,19 @@ function ProfileSummary({ profile, onEdit, onEditDocs }: { profile: StudentProfi
           </ul>
         </section>
 
-        <section className="bg-card rounded-3xl border border-border/60 shadow-soft p-4">
-          <h2 className="font-semibold text-sm flex items-center gap-1.5 px-1.5 pt-0.5 pb-2">
-            <FolderOpen className="h-4 w-4 text-primary" /> {t("profile.docs")}
-          </h2>
-          {uploads.length === 0 ? (
-            <p className="text-xs text-muted-foreground px-2 py-3 text-center">{t("profile.noDocs")}</p>
-          ) : (
-            <ul className="space-y-1">
-              {uploads.map((u) => {
-                const label = optionLabel(DOC_TYPES.find((d) => d.k === u.documentType)?.label ?? u.documentType);
-                return (
-                  <li key={u.documentType} className="flex items-start gap-2 p-2.5 rounded-xl bg-secondary/40">
-                    <FileText className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{label}</p>
-                      <p className="text-[11px] text-muted-foreground truncate">{u.fileName}</p>
-                      <p className="text-[10px] text-muted-foreground">{new Date(u.uploadDate).toLocaleDateString()}</p>
-                    </div>
-                    <span className="text-[10px] font-semibold text-primary bg-primary-soft px-2 py-0.5 rounded-full">{t("profile.docStatus")}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-
-        <div className="grid grid-cols-2 gap-2">
-          <Button onClick={onEdit} className="rounded-xl gap-1"><Pencil className="h-4 w-4" /> {t("profile.editProfile")}</Button>
-          <Button onClick={onEditDocs} variant="outline" className="rounded-xl gap-1"><FilePlus2 className="h-4 w-4" /> {t("profile.updateDocs")}</Button>
-        </div>
+        <Button onClick={onEdit} className="w-full rounded-xl gap-1">
+          <Pencil className="h-4 w-4" /> {t("profile.editProfile")}
+        </Button>
       </div>
     </AppScreen>
   );
 }
 
-/* ----------------- Wizard ----------------- */
-
-function ProfileWizard({ initial, initialStep, onCancel, onSaved }: { initial: StudentProfile; initialStep: number; onCancel: () => void; onSaved: () => void }) {
+function ProfileWizard({ initial, onCancel, onSaved }: { initial: StudentProfile; onCancel: () => void; onSaved: () => void }) {
   const t = useT();
   const navigate = useNavigate();
   const optionLabel = useOptionLabel();
-  const [step, setStep] = useState(initialStep);
+  const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<StudentProfile>(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -217,7 +179,7 @@ function ProfileWizard({ initial, initialStep, onCancel, onSaved }: { initial: S
   };
 
   const progress = ((step + 1) / STEP_COUNT) * 100;
-  const stepLabels = [t("profile.step.about"), t("profile.step.studies"), t("profile.step.context"), t("profile.step.docs")];
+  const stepLabels = [t("profile.step.about"), t("profile.step.studies"), t("profile.step.context")];
 
   return (
     <AppScreen
@@ -240,7 +202,7 @@ function ProfileWizard({ initial, initialStep, onCancel, onSaved }: { initial: S
         <div className="rounded-2xl bg-card border border-border/60 p-4 text-[12px] text-foreground/80 leading-relaxed shadow-soft">
           <div className="flex items-start gap-2">
             <Shield className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <p>{t("profile.aiInfo")}</p>
+            <p>{t("profile.profileInfo")}</p>
           </div>
         </div>
 
@@ -341,31 +303,6 @@ function ProfileWizard({ initial, initialStep, onCancel, onSaved }: { initial: S
               </Field>
             </>
           )}
-
-          {step === 3 && (
-            <>
-              <div>
-                <h3 className="text-sm font-semibold flex items-center gap-1.5"><FolderOpen className="h-4 w-4 text-primary" /> {t("profile.uploadHeader")}</h3>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{t("profile.uploadHelp")}</p>
-              </div>
-              <div className="space-y-2">
-                {DOC_TYPES.map(({ k, label }) => (
-                  <DocUploadRow
-                    key={k}
-                    label={optionLabel(label)}
-                    docType={k}
-                    uploads={profile.uploads ?? []}
-                    onAdd={(u) => update("uploads", [...(profile.uploads ?? []).filter((x) => x.documentType !== u.documentType), u])}
-                    onRemove={(type) => update("uploads", (profile.uploads ?? []).filter((x) => x.documentType !== type))}
-                  />
-                ))}
-              </div>
-              <div className="flex items-start gap-2 rounded-2xl bg-primary-soft border border-primary/15 p-3 text-xs">
-                <Shield className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                <p className="text-foreground/80">{t("profile.uploadHelp")}</p>
-              </div>
-            </>
-          )}
         </div>
 
         <div className="sticky bottom-0 flex gap-2 border-t border-border/60 bg-app/95 pt-3 pb-1 backdrop-blur-md">
@@ -392,56 +329,6 @@ function Field({ label, hint, error, children }: { label: string; hint?: string;
       {children}
       {hint && !error && <p className="text-[11px] text-muted-foreground">{hint}</p>}
       {error && <p className="text-[11px] text-destructive">{error}</p>}
-    </div>
-  );
-}
-
-function DocUploadRow({ label, docType, uploads, onAdd, onRemove }: {
-  label: string; docType: string; uploads: DocumentUpload[];
-  onAdd: (u: DocumentUpload) => void; onRemove: (type: string) => void;
-}) {
-  const t = useT();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const existing = uploads.find((u) => u.documentType === docType);
-
-  const handleFile = (file: File) => {
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    if (!ext || !["pdf", "doc", "docx"].includes(ext)) {
-      toast.error(t("profile.fileUnsupported"));
-      return;
-    }
-    onAdd({ documentType: docType, fileName: file.name, uploadDate: new Date().toISOString() });
-    toast.success(t("profile.docAdded", { name: label }));
-  };
-
-  return (
-    <div className="rounded-2xl border border-border bg-secondary/40 p-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <FileText className="h-4 w-4 text-primary shrink-0" />
-          <span className="text-sm font-medium truncate">{label}</span>
-        </div>
-        {!existing ? (
-          <Button type="button" size="sm" variant="outline" className="rounded-xl h-8" onClick={() => inputRef.current?.click()}>
-            <Upload className="h-3.5 w-3.5 mr-1" /> {t("profile.upload")}
-          </Button>
-        ) : (
-          <Button type="button" size="sm" variant="ghost" className="rounded-xl h-8 text-destructive hover:text-destructive" onClick={() => onRemove(docType)}>
-            <X className="h-3.5 w-3.5 mr-1" /> {t("profile.remove")}
-          </Button>
-        )}
-        <input ref={inputRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={(e) => {
-          const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = "";
-        }} />
-      </div>
-      {existing && (
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <p className="text-[11px] text-muted-foreground truncate">
-            {existing.fileName} - {new Date(existing.uploadDate).toLocaleDateString()}
-          </p>
-          <span className="text-[10px] font-semibold text-primary bg-primary-soft px-2 py-0.5 rounded-full shrink-0">{t("profile.added")}</span>
-        </div>
-      )}
     </div>
   );
 }

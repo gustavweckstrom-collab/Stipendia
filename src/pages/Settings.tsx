@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import AppScreen from "@/components/layout/AppScreen";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Bell, Languages, Database, Trash2, RotateCcw, Bookmark, FileText, Info, Shield } from "lucide-react";
+import { Bell, Languages, Database, Trash2, RotateCcw, Bookmark, Info, Shield } from "lucide-react";
 import { getLang, setLang, useT, Lang } from "@/lib/i18n";
 import { clearAll, clearProfile } from "@/lib/storage";
 import { toast } from "sonner";
@@ -14,8 +14,8 @@ import {
 
 const NOTIF_KEY = "stipendia.notifs";
 
-interface Notifs { applicationReminders: boolean; savedReminders: boolean; draftReminders: boolean; matchUpdates: boolean }
-const defaultNotifs: Notifs = { applicationReminders: true, savedReminders: true, draftReminders: true, matchUpdates: false };
+interface Notifs { applicationReminders: boolean; savedReminders: boolean; matchUpdates: boolean }
+const defaultNotifs: Notifs = { applicationReminders: true, savedReminders: true, matchUpdates: false };
 
 function loadNotifs(): Notifs {
   try {
@@ -55,9 +55,6 @@ export default function SettingsPage() {
           </Row>
           <Row icon={Bookmark} label={t("settings.savedReminders")}>
             <Switch checked={notifs.savedReminders} onCheckedChange={(v) => update("savedReminders", v)} />
-          </Row>
-          <Row icon={FileText} label={t("settings.draftReminders")}>
-            <Switch checked={notifs.draftReminders} onCheckedChange={(v) => update("draftReminders", v)} />
           </Row>
           <Row icon={Info} label={t("settings.matchUpdates")} last>
             <Switch checked={notifs.matchUpdates} onCheckedChange={(v) => update("matchUpdates", v)} />

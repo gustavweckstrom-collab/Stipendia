@@ -1,6 +1,6 @@
 # Stipendia
 
-Stipendia är en mobilanpassad prototyp som hjälper studenter att hitta relevanta stiftelser, spara intressanta stipendier, bedöma behörighet och skapa ansökningsutkast.
+Stipendia är en mobilanpassad prototyp som hjälper studenter att hitta relevanta stiftelser, spara intressanta stipendier och bedöma möjlig behörighet.
 
 ## Stipendiedata
 

@@ -19,7 +19,6 @@ const baseScholarship: Scholarship = {
   source: { name: "test" },
   tags: [],
   criteria: [],
-  requiredDocuments: [],
   eligibleUniversities: [],
   eligibleFields: [],
   eligibleLocations: [],

@@ -1,11 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { loadDrafts, loadProfile, loadSavedIds } from "@/lib/storage";
-import { isProfileComplete, profileCompleteness, StudentProfile, SavedApplication } from "@/types/profile";
+import { loadProfile, loadSavedIds } from "@/lib/storage";
+import { isProfileComplete, profileCompleteness, StudentProfile } from "@/types/profile";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import {
-  Sparkles, FileText, GraduationCap, Wallet, Plane, BookOpen, ChevronRight, HelpCircle, UserPlus, Send, Bookmark, ShieldCheck,
+  Search, GraduationCap, Wallet, Plane, BookOpen, ChevronRight, HelpCircle, UserPlus, Bookmark, ShieldCheck,
 } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { StipendiaIllustration } from "@/components/visual/StipendiaIllustration";
@@ -14,13 +14,11 @@ export default function Home() {
   const t = useT();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<StudentProfile | null>(null);
-  const [drafts, setDrafts] = useState<SavedApplication[]>([]);
   const [savedCount, setSavedCount] = useState(0);
 
   useEffect(() => {
     const refresh = () => {
       setProfile(loadProfile());
-      setDrafts(loadDrafts());
       setSavedCount(loadSavedIds().length);
     };
     refresh();
@@ -81,7 +79,7 @@ export default function Home() {
                 <p className="font-bold text-lg leading-tight mt-0.5">
                   {completeness === 0 ? t("home.startProfile") : t("home.profileProgress", { p: completeness })}
                 </p>
-                <p className="text-[12px] text-muted-foreground mt-1">{t("profile.aiSummary")}</p>
+                <p className="text-[12px] text-muted-foreground mt-1">{t("profile.profileSummary")}</p>
               </div>
               <div className="h-12 w-12 rounded-2xl bg-white text-primary flex items-center justify-center shadow-soft shrink-0">
                 <GraduationCap className="h-6 w-6" />
@@ -102,21 +100,16 @@ export default function Home() {
       <Section title={t("home.howItWorks")}>
         <ol className="space-y-3">
           <Step n={1} icon={UserPlus} title={t("home.step1.title")} desc={t("home.step1.desc")} />
-          <Step n={2} icon={Sparkles} title={t("home.step2.title")} desc={t("home.step2.desc")} />
-          <Step n={3} icon={Send} title={t("home.step3.title")} desc={t("home.step3.desc")} />
+          <Step n={2} icon={Search} title={t("home.step2.title")} desc={t("home.step2.desc")} />
+          <Step n={3} icon={ShieldCheck} title={t("home.step3.title")} desc={t("home.step3.desc")} />
         </ol>
       </Section>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2">
         <Link to="/stipendier?sparade=1" className="p-4 bg-card rounded-2xl border border-border/60 shadow-soft transition-transform active:scale-[0.99]">
           <span className="h-10 w-10 rounded-xl bg-accent-soft text-accent-foreground flex items-center justify-center"><Bookmark className="h-5 w-5" /></span>
           <p className="font-semibold text-sm mt-2">{t("home.savedTitle")}</p>
           <p className="text-[11px] text-muted-foreground">{t("home.savedSub", { n: savedCount })}</p>
-        </Link>
-        <Link to="/utkast" className="p-4 bg-card rounded-2xl border border-border/60 shadow-soft transition-transform active:scale-[0.99]">
-          <span className="h-10 w-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center"><FileText className="h-5 w-5" /></span>
-          <p className="font-semibold text-sm mt-2">{t("home.draftsTitle")}</p>
-          <p className="text-[11px] text-muted-foreground">{t("home.draftsSub", { n: drafts.length })}</p>
         </Link>
       </div>
 

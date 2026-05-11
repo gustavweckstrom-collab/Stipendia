@@ -1,12 +1,11 @@
-import { BookOpen, FileText, Search, ShieldCheck, Sparkles } from "lucide-react";
+import { BookOpen, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Variant = "home" | "saved" | "drafts" | "profile" | "empty";
+type Variant = "home" | "saved" | "profile" | "empty";
 
 const variantIcon = {
   home: Sparkles,
   saved: Search,
-  drafts: FileText,
   profile: ShieldCheck,
   empty: BookOpen,
 } as const;

@@ -6,7 +6,7 @@ import { checkEligibility } from "@/lib/eligibility";
 import { isApplied, loadProfile, toggleApplied } from "@/lib/storage";
 import AppScreen from "@/components/layout/AppScreen";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Building2, Check, CheckCircle2, CircleHelp, ExternalLink, FileEdit, ShieldCheck, Sparkles, Tag, UserPlus } from "lucide-react";
+import { AlertCircle, Building2, Check, CheckCircle2, CircleHelp, ExternalLink, ShieldCheck, Sparkles, Tag, UserPlus } from "lucide-react";
 import { StudentProfile } from "@/types/profile";
 import { useT } from "@/lib/i18n";
 import { ApplicationStateBadge, EligibilityStateBadge } from "@/components/StatusBadge";
@@ -190,12 +190,9 @@ function EligibilityCard({ item }: { item: EligibilityItem }) {
         </div>
       )}
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mt-3">
         <Button asChild size="sm" className="rounded-xl gap-1">
           <a href={externalApplicationUrl(s)} target="_blank" rel="noopener noreferrer">{t("sch.applyExternal")} <ExternalLink className="h-3.5 w-3.5" /></a>
-        </Button>
-        <Button asChild size="sm" variant="outline" className="rounded-xl gap-1">
-          <Link to={`/utkast/${s.id}`}><FileEdit className="h-3.5 w-3.5" /> {t("match.draft")}</Link>
         </Button>
       </div>
       <button

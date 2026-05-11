@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Home, User, Search, ShieldCheck, FileText } from "lucide-react";
+import { Home, User, Search, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 
@@ -9,7 +9,6 @@ export default function BottomTabs() {
     { to: "/", label: t("nav.home"), icon: Home, end: true },
     { to: "/stipendier", label: t("nav.scholarships"), icon: Search },
     { to: "/matchningar", label: t("nav.matches"), icon: ShieldCheck },
-    { to: "/utkast", label: t("nav.drafts"), icon: FileText },
     { to: "/profil", label: t("nav.profile"), icon: User },
   ];
   return (

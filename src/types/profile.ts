@@ -1,9 +1,3 @@
-export interface DocumentUpload {
-  documentType: string;
-  fileName: string;
-  uploadDate: string;
-}
-
 export interface StudentProfile {
   firstName: string;
   lastName: string;
@@ -22,13 +16,6 @@ export interface StudentProfile {
   intressen: string;
   syfte: string;
   syfteAnnan?: string;
-  dokument?: {
-    cv?: boolean;
-    personligtBrev?: boolean;
-    rekommendationsbrev?: boolean;
-    andra?: boolean;
-  };
-  uploads?: DocumentUpload[];
 }
 
 export const EMPTY_PROFILE: StudentProfile = {
@@ -48,22 +35,7 @@ export const EMPTY_PROFILE: StudentProfile = {
   intressen: "",
   syfte: "",
   syfteAnnan: "",
-  dokument: { cv: false, personligtBrev: false, rekommendationsbrev: false, andra: false },
-  uploads: [],
 };
-
-export type ApplicationStatus = "utkast";
-
-export interface SavedApplication {
-  scholarshipId: string;
-  scholarshipName: string;
-  text: string;
-  status: ApplicationStatus;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type SavedDraft = SavedApplication;
 
 export const PROFILE_REQUIRED_FIELDS: (keyof StudentProfile)[] = [
   "firstName", "lastName", "kon", "hemort",
@@ -159,13 +131,6 @@ export const EKONOMI_OPTIONS = [
   "Jag har svårt att täcka levnadsomkostnader",
   "Jag söker främst för att finansiera ett särskilt ändamål",
   "Vill inte uppge",
-] as const;
-
-export const DOC_TYPES = [
-  { k: "cv", label: "CV" },
-  { k: "personligtBrev", label: "Personligt brev" },
-  { k: "rekommendationsbrev", label: "Rekommendationsbrev" },
-  { k: "andra", label: "Andra viktiga dokument" },
 ] as const;
 
 export const SCHOLARSHIP_TYPES = [

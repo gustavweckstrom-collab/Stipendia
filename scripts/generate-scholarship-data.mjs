@@ -596,7 +596,6 @@ async function deriveScholarship(row, index) {
     },
     tags,
     criteria: description ? [description] : [],
-    requiredDocuments: [],
     eligibleUniversities: [],
     eligibleFields: fieldOfStudy,
     eligibleLocations: [],

@@ -31,7 +31,6 @@ export interface Scholarship {
   source: ScholarshipSource;
   tags: string[];
   criteria: string[];
-  requiredDocuments: string[];
   eligibleUniversities: string[];
   eligibleFields: string[];
   eligibleLocations: string[];
