@@ -100,7 +100,7 @@ export default function Home() {
       </div>
 
       <Section title={t("home.howItWorks")}>
-        <ol className="space-y-2.5">
+        <ol className="space-y-3">
           <Step n={1} icon={UserPlus} title={t("home.step1.title")} desc={t("home.step1.desc")} />
           <Step n={2} icon={Sparkles} title={t("home.step2.title")} desc={t("home.step2.desc")} />
           <Step n={3} icon={Send} title={t("home.step3.title")} desc={t("home.step3.desc")} />
@@ -154,14 +154,16 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 function Step({ n, icon: Icon, title, desc }: { n: number; icon: any; title: string; desc: string }) {
   return (
-    <li className="flex items-start gap-3 p-3 bg-card rounded-2xl border border-border/60 shadow-soft">
-      <span className="relative h-10 w-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center shrink-0">
-        <Icon className="h-5 w-5" />
-        <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full border border-white bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">{n}</span>
+    <li className="flex items-start gap-3 rounded-2xl border border-border/50 bg-secondary/25 px-3.5 py-3.5">
+      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-card text-xs font-bold text-primary">
+        {n}
       </span>
-      <div className="min-w-0">
-        <p className="font-semibold text-sm">{title}</p>
-        <p className="text-[12px] text-muted-foreground leading-snug">{desc}</p>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <Icon className="h-4 w-4 shrink-0 text-primary/75" />
+          <p className="font-semibold text-sm leading-tight">{title}</p>
+        </div>
+        <p className="mt-1 text-[12px] text-muted-foreground leading-relaxed">{desc}</p>
       </div>
     </li>
   );
