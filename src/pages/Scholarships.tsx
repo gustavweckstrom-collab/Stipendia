@@ -55,6 +55,7 @@ function scholarshipHasText(s: Scholarship, value: string) {
     s.location ?? "",
     s.source?.city ?? "",
     s.description,
+    s.descriptionEn ?? "",
     ...(s.criteria ?? []),
     ...(s.tags ?? []),
     ...(s.targetGroup ?? []),
