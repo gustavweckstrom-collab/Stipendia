@@ -15,6 +15,7 @@ export interface Scholarship {
   name: string;
   organization: string;
   description: string;
+  descriptionEn?: string;
   targetGroup: string[];
   requirements: string[];
   location: string | null;
