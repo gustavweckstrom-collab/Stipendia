@@ -10,6 +10,32 @@ const OUT_DIR = path.join(ROOT, "public", "data", "scholarships");
 const PAGE_SIZE = 100;
 const FILTER_DESCRIPTION = "Endast stipendier relevanta för universitets- och högskolestudenter";
 
+const DEEPL_API_KEY = "18eb8364-ad65-4888-be29-c677376400b9:fx";
+
+async function translateText(text) {
+  if (!text) return null;
+  try {
+    const response = await fetch("https://api-free.deepl.com/v2/translate", {
+      method: "POST",
+      headers: {
+        "Authorization": `DeepL-Auth-Key ${DEEPL_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text: [text],
+        target_lang: "EN"
+      })
+    });
+    
+    if (!response.ok) return text; // Fallback to Swedish if API fails
+    const data = await response.json();
+    return data.translations[0].text;
+  } catch (e) {
+    console.error("Translation error:", e);
+    return text; // Fallback to Swedish
+  }
+}
+
 const FIELD_RULES = [
   ["Datavetenskap / IT", ["datavetenskap", "informatik", "programmering", "dataingenjor", "it-studier", "it utbildning"]],
   ["Teknik / Ingenjörsvetenskap", ["teknik", "teknisk", "ingenjor", "civilingenjor", "arkitektutbildning"]],
