@@ -22,6 +22,11 @@ import { toast } from "sonner";
 export default function ScholarshipDetail() {
   const t = useT();
   const lang = useLang();
+  const translateTag = (tag: string) => {
+    if (tag === "studenter") return lang === "en" ? "Students" : "Studerande";
+    if (tag === "behövande") return lang === "en" ? "Need-based" : "Behövande";
+    return tag; 
+  };
   const { id } = useParams();
   const profile = loadProfile();
   const [scholarship, setScholarship] = useState<Scholarship | null>(null);
@@ -118,7 +123,7 @@ export default function ScholarshipDetail() {
 
         {(s.tags ?? []).length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {s.tags.map((tg) => <span key={tg} className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-muted-foreground">{tg}</span>)}
+            {s.tags.map((tg) => <span key={tg} className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-muted-foreground">{translateTag(tg)}</span>)}
           </div>
         )}
 
@@ -139,7 +144,7 @@ export default function ScholarshipDetail() {
             <div className="mt-3 flex flex-wrap gap-1.5">
               {s.targetGroup.map((group) => (
                 <span key={group} className="rounded-full border border-border/60 bg-secondary/70 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-                  {group}
+                  {translateTag(group)}
                 </span>
               ))}
             </div>
