@@ -1,3 +1,4 @@
+import { useTagTranslator } from "@/lib/tagTranslator";
 import { useParams } from "react-router-dom";
 import { Scholarship } from "@/data/scholarships";
 import {
@@ -24,11 +25,7 @@ import { toast } from "sonner";
 export default function ScholarshipDetail() {
   const t = useT();
   const lang = useLang();
-  const translateTag = (tag: string) => {
-    if (tag === "studenter") return lang === "en" ? "Students" : "Studerande";
-    if (tag === "behövande") return lang === "en" ? "Need-based" : "Behövande";
-    return tag; 
-  };
+  const translateTag = useTagTranslator();
   const { id } = useParams();
   const profile = loadProfile();
   const [scholarship, setScholarship] = useState<Scholarship | null>(null);
@@ -64,7 +61,7 @@ export default function ScholarshipDetail() {
   const s = scholarship;
   const elig = profile ? checkEligibility(profile, s) : null;
   const eligState = elig ? eligibilityState(elig) : null;
-  const category = primaryScholarshipCategory(s) ?? t("sch.studentRelevant");
+  const category = translateTag(primaryScholarshipCategory(s) ?? t("sch.studentRelevant"));
   const place = scholarshipLocationLabel(s) || s.organization || t("common.missing");
   const requirementTexts = distinctEligibilityRequirements(s);
   const eligibilityPoints = eligibilityHighlights(s);

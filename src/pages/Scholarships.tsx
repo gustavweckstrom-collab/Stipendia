@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import { useTagTranslator } from "@/lib/tagTranslator";
 import { Link, useSearchParams } from "react-router-dom";
 import { Scholarship, ScholarshipIndex } from "@/data/scholarships";
 import {
@@ -642,6 +643,7 @@ function BrowseCard({
   relationSearchValues: string[];
 }) {
   const t = useT();
+  const translateTag = useTagTranslator();
   const eligibilityResult = profile ? checkEligibility(profile, s) : null;
   const state = eligibilityResult ? eligibilityState(eligibilityResult) : null;
   const category = primaryScholarshipCategory(s) ?? t("sch.studentRelevant");
@@ -670,7 +672,7 @@ function BrowseCard({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
-        <MetaPill icon={Tag} label={category} tone="primary" />
+        <MetaPill icon={Tag} label={translateTag(category)} tone="primary" />
         {isTravel && <MetaPill icon={Plane} label={t("sch.travelBadge")} tone="primary" />}
         {isStudyAbroad && <MetaPill icon={Plane} label={t("sch.studyAbroadBadge")} tone="primary" />}
         {hasGeoConnection && <MetaPill icon={MapPin} label={t("sch.geoBadge")} />}
