@@ -28,6 +28,7 @@ export function useTagTranslator() {
       "resor": "Travel"
     };
     const normalizedTag = tag.trim().toLowerCase();
+    console.log(`Original: "${tag}", Normalized: "${normalizedTag}", Lang: ${lang}`);
     if (lang === "en" && enTranslations[normalizedTag]) {
       return enTranslations[normalizedTag];
     }
