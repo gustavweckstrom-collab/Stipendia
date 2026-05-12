@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AppScreen from "@/components/layout/AppScreen";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -19,8 +18,11 @@ import {
   HEMORT_SUGGESTIONS,
   AMNESOMRADE_OPTIONS,
   EDUCATION_LEVEL_OPTIONS,
+  ENGAGEMENT_OPTIONS,
   SYFTE_OPTIONS,
   EKONOMI_OPTIONS,
+  PROGRAM_SUGGESTIONS_BY_UNIVERSITY,
+  COMMON_PROGRAM_SUGGESTIONS,
   isProfileComplete,
 } from "@/types/profile";
 import { loadProfile, saveProfile } from "@/lib/storage";
@@ -29,6 +31,10 @@ import { useOptionLabel, useT } from "@/lib/i18n";
 import { toast } from "sonner";
 
 const STEP_COUNT = 3;
+
+function normalize(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -129,6 +135,14 @@ function ProfileWizard({ initial, onCancel, onSaved }: { initial: StudentProfile
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<StudentProfile>(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const programOptions = useMemo(() => {
+    const selectedUniversity = Object.keys(PROGRAM_SUGGESTIONS_BY_UNIVERSITY)
+      .find((university) => normalize(university) === normalize(profile.universitet));
+    return Array.from(new Set([
+      ...(selectedUniversity ? PROGRAM_SUGGESTIONS_BY_UNIVERSITY[selectedUniversity] : []),
+      ...COMMON_PROGRAM_SUGGESTIONS,
+    ]));
+  }, [profile.universitet]);
 
   const update = <K extends keyof StudentProfile>(k: K, v: StudentProfile[K]) =>
     setProfile((p) => ({ ...p, [k]: v }));
@@ -159,6 +173,7 @@ function ProfileWizard({ initial, onCancel, onSaved }: { initial: StudentProfile
     }
     if (step === 2) {
       if (!profile.syfte.trim()) e.syfte = t("v.purposeReq");
+      if (!profile.ekonomi.trim()) e.ekonomi = t("v.economyReq");
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -248,7 +263,8 @@ function ProfileWizard({ initial, onCancel, onSaved }: { initial: StudentProfile
                 <SearchableCombobox value={profile.universitet} onChange={(v) => update("universitet", v)} options={UNIVERSITET_OPTIONS} placeholder={t("profile.uniPh")} />
               </Field>
               <Field label={`${t("profile.program")} *`} error={errors.program}>
-                <Input value={profile.program} onChange={(e) => update("program", e.target.value)} placeholder={t("profile.programPh")} />
+                <SearchableCombobox value={profile.program} onChange={(v) => update("program", v)} options={programOptions} placeholder={t("profile.programPh")} maxResults={8} />
+                <p className="mt-1 text-[11px] text-muted-foreground">{t("profile.programHint")}</p>
               </Field>
               <Field label={`${t("profile.field")} *`} error={errors.amnesomrade}>
                 <Select value={profile.amnesomrade} onValueChange={(v) => update("amnesomrade", v)}>
@@ -260,13 +276,27 @@ function ProfileWizard({ initial, onCancel, onSaved }: { initial: StudentProfile
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label={`${t("profile.educationLevel")} *`} error={errors.utbildningsniva}>
-                  <Select value={profile.utbildningsniva} onValueChange={(v) => update("utbildningsniva", v)}>
-                    <SelectTrigger><SelectValue placeholder={t("profile.selectPh")} /></SelectTrigger>
-                    <SelectContent>
-                      {EDUCATION_LEVEL_OPTIONS.map((level) => <SelectItem key={level} value={level}>{optionLabel(level)}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </Field>
+                    <Select value={profile.utbildningsniva} onValueChange={(v) => update("utbildningsniva", v)}>
+                      <SelectTrigger><SelectValue placeholder={t("profile.selectPh")} /></SelectTrigger>
+                      <SelectContent>
+                        {EDUCATION_LEVEL_OPTIONS.map((level) => (
+                          <SelectItem key={level} value={level}>
+                            {optionLabel(level)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="mt-2 rounded-2xl border border-border/60 bg-secondary/40 p-3 text-[11px] leading-relaxed text-muted-foreground">
+                      <p>
+                        <span className="font-semibold text-foreground">{optionLabel("Grundnivå")}:</span>{" "}
+                        {t("profile.educationLevel.basicDesc")}
+                      </p>
+                      <p className="mt-1">
+                        <span className="font-semibold text-foreground">{optionLabel("Avancerad nivå")}:</span>{" "}
+                        {t("profile.educationLevel.advancedDesc")}
+                      </p>
+                    </div>
+                  </Field>
                 <Field label={`${t("profile.studyCity")} *`} error={errors.studieort}>
                   <SearchableCombobox value={profile.studieort} onChange={(v) => update("studieort", v)} options={STUDIEORT_OPTIONS} placeholder={t("profile.studyCityPh")} />
                 </Field>
@@ -277,10 +307,12 @@ function ProfileWizard({ initial, onCancel, onSaved }: { initial: StudentProfile
           {step === 2 && (
             <>
               <Field label={t("profile.engagement")}>
-                <Textarea rows={3} value={profile.engagemang} onChange={(e) => update("engagemang", e.target.value)} placeholder={t("profile.engagementPh")} />
-              </Field>
-              <Field label={t("profile.interests")}>
-                <Textarea rows={2} value={profile.intressen} onChange={(e) => update("intressen", e.target.value)} placeholder={t("profile.interestsPh")} />
+                <Select value={profile.engagemang} onValueChange={(v) => update("engagemang", v)}>
+                  <SelectTrigger><SelectValue placeholder={t("profile.selectOptionPh")} /></SelectTrigger>
+                  <SelectContent>
+                    {ENGAGEMENT_OPTIONS.map((o) => <SelectItem key={o} value={o}>{optionLabel(o)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </Field>
               <Field label={`${t("profile.purpose")} *`} error={errors.syfte} hint={t("profile.purposeHint")}>
                 <Select value={profile.syfte} onValueChange={(v) => update("syfte", v)}>
@@ -290,16 +322,13 @@ function ProfileWizard({ initial, onCancel, onSaved }: { initial: StudentProfile
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label={t("profile.economy")}>
+              <Field label={`${t("profile.economy")} *`} error={errors.ekonomi}>
                 <Select value={profile.ekonomi} onValueChange={(v) => update("ekonomi", v)}>
                   <SelectTrigger><SelectValue placeholder={t("profile.selectOptionPh")} /></SelectTrigger>
                   <SelectContent>
                     {EKONOMI_OPTIONS.map((o) => <SelectItem key={o} value={o}>{optionLabel(o)}</SelectItem>)}
                   </SelectContent>
                 </Select>
-              </Field>
-              <Field label={`${t("profile.aboutYou")} (${t("common.optional")})`} hint={t("profile.aboutYouHint")}>
-                <Textarea rows={3} value={profile.omDig ?? ""} onChange={(e) => update("omDig", e.target.value)} placeholder="" />
               </Field>
             </>
           )}

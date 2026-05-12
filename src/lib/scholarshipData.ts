@@ -89,14 +89,37 @@ export function looseIncludes(a: string | null | undefined, b: string | null | u
   return left.includes(right) || right.includes(left);
 }
 
+const LOWER_PLACE_WORDS = new Set(["län", "kommun", "stad", "region", "församling"]);
+
+function titleCasePlace(value: string): string {
+  return value
+    .toLocaleLowerCase("sv-SE")
+    .split(/(\s+|-)/)
+    .map((part, index) => {
+      if (/^\s+$|^-$/u.test(part)) return part;
+      if (index > 0 && LOWER_PLACE_WORDS.has(part)) return part;
+      return part.charAt(0).toLocaleUpperCase("sv-SE") + part.slice(1);
+    })
+    .join("");
+}
+
 function cleanLabel(value: string | null | undefined): string {
   const text = (value ?? "").replace(/_x000D_/g, " ").replace(/\s+/g, " ").trim();
   if (!text) return "";
   return text === text.toLowerCase() ? text.charAt(0).toUpperCase() + text.slice(1) : text;
 }
 
+export function formatPlaceLabel(value: string | null | undefined): string | null {
+  const text = cleanLabel(value);
+  if (!text) return null;
+  const letters = text.replace(/[^A-Za-zÅÄÖåäö]/g, "");
+  const looksAllCaps = letters.length > 1 && letters === letters.toLocaleUpperCase("sv-SE");
+  const looksAllLower = letters.length > 1 && letters === letters.toLocaleLowerCase("sv-SE");
+  return looksAllCaps || looksAllLower ? titleCasePlace(text) : text;
+}
+
 export function scholarshipLocationLabel(scholarship: Scholarship): string | null {
-  return cleanLabel(scholarship.location || scholarship.source?.city || null) || null;
+  return formatPlaceLabel(scholarship.location || scholarship.source?.city || null);
 }
 
 function isLocationLike(candidate: string, scholarship: Scholarship): boolean {
@@ -234,6 +257,41 @@ export function scholarshipMatchesTravel(scholarship: Scholarship): boolean {
   ]);
 }
 
+export function scholarshipMatchesStudyAbroad(scholarship: Scholarship): boolean {
+  const text = normalizeText([
+    scholarship.name,
+    scholarship.description,
+    ...(scholarship.criteria ?? []),
+    ...(scholarship.tags ?? []),
+    ...(scholarship.purposes ?? []),
+  ].join(" "));
+  return hasText(text, ["utlandsstudier", "studier utomlands", "utbyte", "utbytesstudier", "exchange", "abroad"]);
+}
+
+// Search spans names, long descriptions, eligibility text, geography and
+// structured categories. Filtering still scans chunks gradually and renders
+// small batches, so the app does not load the whole dataset into the UI.
+export function scholarshipSearchFields(scholarship: Scholarship): string[] {
+  return [
+    scholarship.name,
+    scholarship.organization,
+    scholarship.description,
+    scholarship.descriptionEn ?? "",
+    scholarship.location ?? "",
+    scholarship.source?.city ?? "",
+    scholarship.source?.address ?? "",
+    ...(scholarship.requirements ?? []),
+    ...(scholarship.criteria ?? []),
+    ...(scholarship.targetGroup ?? []),
+    ...(scholarship.tags ?? []),
+    ...(scholarship.fieldOfStudy ?? []),
+    ...(scholarship.eligibleFields ?? []),
+    ...(scholarship.eligibleUniversities ?? []),
+    ...(scholarship.eligibleLocations ?? []),
+    ...(scholarship.purposes ?? []),
+  ];
+}
+
 export function scholarshipMatchesEducationLevel(scholarship: Scholarship, level: string): boolean {
   const normalizedLevel = normalizeText(level);
   if (!normalizedLevel) return true;
@@ -246,6 +304,9 @@ export function scholarshipMatchesEducationLevel(scholarship: Scholarship, level
   ].join(" "));
   const doctoralMatch = hasText(text, ["doktorand", "doktorander", "forskarutbildning", "forskningsnivå", "forskningsniva", "forskning", "forskningsprojekt"]);
   if (normalizedLevel.includes("doktor")) return doctoralMatch;
+  if (normalizedLevel.includes("frist")) return !doctoralMatch && hasText(text, ["kurs", "utbildning", "studier", "universitet", "högskola", "hogskola", "studerande", "student"]);
+  if (normalizedLevel.includes("kandidat")) return !doctoralMatch && hasText(text, ["kandidat", "bachelor", "grundnivå", "grundniva", "grundutbildning", "universitet", "högskola", "hogskola", "studerande", "student"]);
+  if (normalizedLevel.includes("master")) return !doctoralMatch && hasText(text, ["master", "magister", "avancerad nivå", "avancerad niva", "universitet", "högskola", "hogskola", "studerande", "student"]);
   if (normalizedLevel.includes("grund") && normalizedLevel.includes("avancerad")) return !doctoralMatch;
   if (normalizedLevel.includes("avancerad")) return hasText(text, ["avancerad nivå", "avancerad niva", "master", "magister"]);
   return hasText(text, ["grundnivå", "grundniva", "kandidat", "bachelor", "grundutbildning", "universitet", "högskola", "hogskola", "studerande", "student"]);

@@ -12,6 +12,13 @@ interface Props {
   getOptionLabel?: (option: string) => string;
 }
 
+function normalizeSearch(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 export function SearchableCombobox({ value, onChange, options, placeholder, maxResults = 8, getOptionLabel }: Props) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -24,9 +31,9 @@ export function SearchableCombobox({ value, onChange, options, placeholder, maxR
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
-  const q = value.trim().toLowerCase();
+  const q = normalizeSearch(value.trim());
   const filtered = (q
-    ? options.filter((o) => `${o} ${getOptionLabel?.(o) ?? ""}`.toLowerCase().includes(q))
+    ? options.filter((o) => normalizeSearch(`${o} ${getOptionLabel?.(o) ?? ""}`).includes(q))
     : options
   ).slice(0, maxResults);
 

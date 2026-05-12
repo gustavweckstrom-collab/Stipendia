@@ -18,6 +18,72 @@ export interface StudentProfile {
   syfteAnnan?: string;
 }
 
+export const PROGRAM_SUGGESTIONS_BY_UNIVERSITY: Record<string, string[]> = {
+  "Göteborgs universitet": [
+    "Systemvetenskap: samhällets digitalisering",
+    "Ekonomie kandidatprogram",
+    "Juristprogrammet",
+    "Läkarprogrammet",
+    "Kandidatprogram i globala studier",
+  ],
+  "Chalmers tekniska högskola": [
+    "Civilingenjör Datateknik",
+    "Civilingenjör Teknisk fysik",
+    "Civilingenjör Industriell ekonomi",
+    "Arkitektur",
+    "Sjöingenjörsprogrammet",
+  ],
+  "Stockholms universitet": [
+    "Kandidatprogram i data- och systemvetenskap",
+    "Ekonomprogrammet",
+    "Juristprogrammet",
+    "Kandidatprogram i samhällsvetenskap",
+    "Masterprogram i folkhälsovetenskap",
+  ],
+  "Uppsala universitet": [
+    "Ekonomie kandidatprogram",
+    "Juristprogrammet",
+    "Läkarprogrammet",
+    "Civilingenjörsprogrammet i informationsteknologi",
+    "Kandidatprogram i freds- och utvecklingsstudier",
+  ],
+  "Lunds universitet": [
+    "Ekonomie kandidatprogram",
+    "Juristprogrammet",
+    "Läkarprogrammet",
+    "Civilingenjörsutbildning i datateknik",
+    "Kandidatprogram i strategisk kommunikation",
+  ],
+  "Karolinska Institutet": [
+    "Läkarprogrammet",
+    "Sjuksköterskeprogrammet",
+    "Biomedicinska analytikerprogrammet",
+    "Kandidatprogrammet i biomedicin",
+    "Masterprogrammet i folkhälsovetenskap",
+  ],
+  "Kungliga Tekniska högskolan (KTH)": [
+    "Civilingenjör Datateknik",
+    "Civilingenjör Industriell ekonomi",
+    "Civilingenjör Teknisk fysik",
+    "Civilingenjör Samhällsbyggnad",
+    "Masterprogram i maskininlärning",
+  ],
+};
+
+export const COMMON_PROGRAM_SUGGESTIONS = [
+  "Ekonomie kandidatprogram",
+  "Juristprogrammet",
+  "Läkarprogrammet",
+  "Sjuksköterskeprogrammet",
+  "Civilingenjör Datateknik",
+  "Civilingenjör Industriell ekonomi",
+  "Systemvetenskap",
+  "Kandidatprogram i psykologi",
+  "Socionomprogrammet",
+  "Lärarprogrammet",
+  "Masterprogram i hållbar utveckling",
+] as const;
+
 export const EMPTY_PROFILE: StudentProfile = {
   firstName: "",
   lastName: "",
@@ -110,7 +176,11 @@ export const AMNESOMRADE_OPTIONS = [
 export const EDUCATION_LEVEL_OPTIONS = [
   "Grundnivå",
   "Avancerad nivå",
-  "Doktorand/forskningsnivå",
+] as const;
+
+export const ENGAGEMENT_OPTIONS = [
+  "Ja, jag har föreningsengagemang eller ideellt arbete",
+  "Nej / inte relevant",
 ] as const;
 
 export const SYFTE_OPTIONS = [

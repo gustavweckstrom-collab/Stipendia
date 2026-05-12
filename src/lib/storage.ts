@@ -36,6 +36,9 @@ export function loadProfile(): StudentProfile | null {
       else if (oldTerm.includes("master")) p.utbildningsniva = "Avancerad nivå";
       else p.utbildningsniva = "";
     }
+    if (p.utbildningsniva === "Fristående kurs" || p.utbildningsniva === "Kandidatprogram" || p.utbildningsniva === "Grundnivå / avancerad nivå") p.utbildningsniva = "Grundnivå";
+    if (p.utbildningsniva === "Masterprogram") p.utbildningsniva = "Avancerad nivå";
+    if (String(p.utbildningsniva ?? "").toLowerCase().includes("doktor")) p.utbildningsniva = "";
     return stripLegacyProfileFields(p);
   } catch { return null; }
 }

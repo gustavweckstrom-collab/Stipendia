@@ -11,7 +11,9 @@ import {
   hasDirectApplicationTarget,
   primaryScholarshipCategory,
   scholarshipMatchesEducationLevel,
+  scholarshipMatchesStudyAbroad,
   scholarshipMatchesTravel,
+  scholarshipSearchFields,
   scholarshipLocationLabel,
 } from "@/lib/scholarshipData";
 import AppScreen from "@/components/layout/AppScreen";
@@ -25,14 +27,14 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter,
 } from "@/components/ui/sheet";
 import { SearchableCombobox } from "@/components/ui/SearchableCombobox";
-import { AMNESOMRADE_OPTIONS, HEMORT_SUGGESTIONS, SCHOLARSHIP_TYPES, ScholarshipType, STUDIEORT_OPTIONS, UNIVERSITET_OPTIONS } from "@/types/profile";
+import { AMNESOMRADE_OPTIONS, EDUCATION_LEVEL_OPTIONS, HEMORT_SUGGESTIONS, SCHOLARSHIP_TYPES, ScholarshipType, STUDIEORT_OPTIONS, UNIVERSITET_OPTIONS } from "@/types/profile";
 import { checkEligibility, scholarshipTypes } from "@/lib/eligibility";
 import { loadAppliedIds, loadProfile, loadSavedIds } from "@/lib/storage";
 import { ApplicationStateBadge, EligibilityBadge } from "@/components/StatusBadge";
 import { StipendiaIllustration } from "@/components/visual/StipendiaIllustration";
 
 const RESULT_STEP = 50;
-const FILTER_EDUCATION_LEVEL_OPTIONS = ["Grundnivå / avancerad nivå", "Doktorand/forskningsnivå"] as const;
+const FILTER_EDUCATION_LEVEL_OPTIONS = EDUCATION_LEVEL_OPTIONS;
 
 type ScholarshipFilters = {
   query: string;
@@ -51,32 +53,13 @@ type ScholarshipFilters = {
 function scholarshipHasText(s: Scholarship, value: string) {
   if (!value.trim()) return true;
   const needle = normalizeText(value);
-  return [
-    s.location ?? "",
-    s.source?.city ?? "",
-    s.description,
-    s.descriptionEn ?? "",
-    ...(s.criteria ?? []),
-    ...(s.tags ?? []),
-    ...(s.targetGroup ?? []),
-  ].some((text) => normalizeText(text).includes(needle));
+  return scholarshipSearchFields(s).some((text) => normalizeText(text).includes(needle));
 }
 
 function scholarshipMatchesFilters(s: Scholarship, filters: ScholarshipFilters) {
   const q = normalizeText(filters.query);
   if (filters.query) {
-    const hit = [
-      s.name,
-      s.organization,
-      s.description,
-      s.location ?? "",
-      s.source?.city ?? "",
-      ...(s.criteria ?? []),
-      ...(s.tags ?? []),
-      ...(s.targetGroup ?? []),
-      ...(s.fieldOfStudy ?? []),
-      ...(s.purposes ?? []),
-    ].some((value) => normalizeText(value).includes(q));
+    const hit = scholarshipSearchFields(s).some((value) => normalizeText(value).includes(q));
     if (!hit) return false;
   }
   if (filters.field) {
@@ -144,6 +127,20 @@ export default function Scholarships() {
   useEffect(() => {
     setView(savedParam === "1" ? "saved" : "all");
   }, [savedParam]);
+
+  useEffect(() => {
+    const typeParam = searchParams.get("typ");
+    const validTypes = SCHOLARSHIP_TYPES.filter((type) => typeParam === type);
+    setQuery(searchParams.get("q") ?? "");
+    setField(searchParams.get("falt") ?? "");
+    setUni(searchParams.get("universitet") ?? "");
+    setBirthPlace(searchParams.get("fodelseort") ?? "");
+    setResidencePlace(searchParams.get("bostadsort") ?? "");
+    setLoc(searchParams.get("studieort") ?? "");
+    setEducationLevel(searchParams.get("niva") ?? "");
+    setTravelOnly(searchParams.get("resa") === "1");
+    setTypes(validTypes);
+  }, [searchParams]);
 
   const setBrowseView = useCallback((next: "all" | "saved") => {
     setView(next);
@@ -407,9 +404,12 @@ export default function Scholarships() {
                       const on = types.includes(tp);
                       return (
                         <button key={tp} onClick={() => setTypes((cur) => on ? cur.filter((x) => x !== tp) : [...cur, tp])} className={cn(
-                          "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                          "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
                           on ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border hover:text-foreground"
-                        )}>{optionLabel(tp)}</button>
+                        )}>
+                          {tp === "Utlandsstudier" && <Plane className="h-3.5 w-3.5" />}
+                          {optionLabel(tp)}
+                        </button>
                       );
                     })}
                   </div>
@@ -522,13 +522,15 @@ function BrowseCard({
   const highlights = eligibilityHighlights(s).slice(0, 3);
   const directApplication = hasDirectApplicationTarget(s);
   const isTravel = scholarshipMatchesTravel(s);
+  const isStudyAbroad = scholarshipMatchesStudyAbroad(s);
+  const hasGeoConnection = highlights.some((point) => normalizeText(point).includes("ort") || normalizeText(point).includes("region") || normalizeText(point).includes("local"));
   return (
     <Link to={`/stipendier/${s.id}`} className="group block rounded-[28px] border border-border/70 bg-card p-5 shadow-soft transition-all active:scale-[0.99] hover:shadow-card">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="font-bold text-[15px] leading-snug tracking-tight group-hover:text-primary transition-colors">{s.name}</h3>
+          <h3 className="font-bold text-[16px] leading-snug tracking-tight group-hover:text-primary transition-colors">{s.name}</h3>
           {location && (
-            <p className="mt-1 flex items-center gap-1 text-[12px] text-muted-foreground">
+            <p className="mt-1 flex items-center gap-1 text-[13px] text-muted-foreground">
               <MapPin className="h-3.5 w-3.5 shrink-0 text-primary/75" />
               <span className="truncate">{location}</span>
             </p>
@@ -542,6 +544,8 @@ function BrowseCard({
       <div className="mt-3 flex flex-wrap gap-1.5">
         <MetaPill icon={Tag} label={category} tone="primary" />
         {isTravel && <MetaPill icon={Plane} label={t("sch.travelBadge")} tone="primary" />}
+        {isStudyAbroad && <MetaPill icon={Plane} label={t("sch.studyAbroadBadge")} tone="primary" />}
+        {hasGeoConnection && <MetaPill icon={MapPin} label={t("sch.geoBadge")} />}
         <MetaPill icon={GraduationCap} label={t("sch.studentRelevantShort")} tone="success" />
         {!directApplication && <MetaPill icon={ExternalLink} label={t("sch.externalSourceShort")} />}
         {saved && <MetaPill icon={BookmarkCheck} label={t("nav.saved")} tone="success" />}

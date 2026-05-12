@@ -7,13 +7,15 @@ import {
   hasDirectApplicationTarget,
   loadScholarshipById,
   primaryScholarshipCategory,
+  scholarshipMatchesStudyAbroad,
+  scholarshipMatchesTravel,
   scholarshipLocationLabel,
 } from "@/lib/scholarshipData";
 import { loadProfile, loadSavedIds, toggleSaved, isApplied, toggleApplied } from "@/lib/storage";
 import { checkEligibility } from "@/lib/eligibility";
 import AppScreen from "@/components/layout/AppScreen";
 import { Button } from "@/components/ui/button";
-import { Building2, ExternalLink, CheckCircle2, AlertCircle, Bookmark, BookmarkCheck, Check, Info, Tag, GraduationCap } from "lucide-react";
+import { Building2, ExternalLink, CheckCircle2, AlertCircle, Bookmark, BookmarkCheck, Check, Info, Tag, GraduationCap, Plane, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useT, useLang } from "@/lib/i18n";
 import { ApplicationStateBadge, EligibilityBadge } from "@/components/StatusBadge";
@@ -66,6 +68,10 @@ export default function ScholarshipDetail() {
   const requirementTexts = distinctEligibilityRequirements(s);
   const eligibilityPoints = eligibilityHighlights(s);
   const directApplication = hasDirectApplicationTarget(s);
+  const isTravel = scholarshipMatchesTravel(s);
+  const isStudyAbroad = scholarshipMatchesStudyAbroad(s);
+  const hasGeoConnection = eligibilityPoints.some((point) => point.toLowerCase().includes("ort") || point.toLowerCase().includes("region") || point.toLowerCase().includes("local"));
+  const description = lang == "en" && s.descriptionEn ? s.descriptionEn : (s.description || t("common.missing"));
 
   return (
     <AppScreen
@@ -103,6 +109,21 @@ export default function ScholarshipDetail() {
                 <ExternalLink className="h-3.5 w-3.5" /> {t("sch.externalSourceShort")}
               </span>
             )}
+            {isTravel && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-primary/15 bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                <Plane className="h-3.5 w-3.5" /> {t("sch.travelBadge")}
+              </span>
+            )}
+            {isStudyAbroad && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-primary/15 bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                <Plane className="h-3.5 w-3.5" /> {t("sch.studyAbroadBadge")}
+              </span>
+            )}
+            {hasGeoConnection && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                <MapPin className="h-3.5 w-3.5" /> {t("sch.geoBadge")}
+              </span>
+            )}
           </div>
         </div>
 
@@ -128,7 +149,7 @@ export default function ScholarshipDetail() {
         )}
 
         <Section title={t("sch.description")}>
-          <p className="text-sm text-foreground/85 leading-relaxed">{lang == "en" && s.descriptionEn ? s.descriptionEn : (s.description || t("common.missing"))}</p>
+          <FormattedDescription text={description} />
         </Section>
 
         <Section title={t("sch.whoCanApply")}>
@@ -218,5 +239,39 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h3 className="font-semibold text-sm mb-2 text-foreground">{title}</h3>
       {children}
     </section>
+  );
+}
+
+function formatDescriptionLines(text: string) {
+  return text
+    .replace(/_x000D_/g, "\n")
+    .replace(/\s+(\d+)\.\s+/g, "\n$1. ")
+    .replace(/;\s+(?=[A-ZÅÄÖ0-9])/g, ";\n")
+    .split(/\n+/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+}
+
+function FormattedDescription({ text }: { text: string }) {
+  const lines = formatDescriptionLines(text);
+  const numbered = lines.filter((line) => /^\d+\.\s+/.test(line));
+  if (numbered.length >= 2 && numbered.length === lines.length) {
+    return (
+      <ol className="list-decimal space-y-1.5 pl-5 text-sm text-foreground/85 leading-relaxed">
+        {lines.map((line) => (
+          <li key={line}>{line.replace(/^\d+\.\s+/, "")}</li>
+        ))}
+      </ol>
+    );
+  }
+
+  return (
+    <div className="space-y-2.5 text-sm text-foreground/85 leading-relaxed">
+      {lines.map((line) => /^\d+\.\s+/.test(line) ? (
+        <p key={line} className="pl-4 -indent-4">{line}</p>
+      ) : (
+        <p key={line}>{line}</p>
+      ))}
+    </div>
   );
 }

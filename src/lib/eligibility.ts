@@ -11,6 +11,10 @@ const hasEconomicNeed = (profile: StudentProfile) => {
   const economy = norm(profile.ekonomi);
   return economy.includes("begränsad") || economy.includes("svårt") || economy.includes("täcka levnadsomkostnader");
 };
+const hasEngagement = (profile: StudentProfile) => {
+  const engagement = norm(profile.engagemang);
+  return engagement.length > 0 && !engagement.includes("nej") && !engagement.includes("inte relevant");
+};
 const purposeTags = (profile: StudentProfile) =>
   SYFTE_OPTIONS.find((option) => option.value === profile.syfte)?.tags ?? [];
 
@@ -68,7 +72,7 @@ export function checkEligibility(profile: StudentProfile, s: Scholarship): Eligi
   }
 
   if (s.engagementRequired) {
-    if (profile.engagemang.trim().length > 0) {
+    if (hasEngagement(profile)) {
       reasons.push(en ? "You have added association involvement or volunteer work" : "Du har angett föreningsengagemang eller ideellt arbete");
     } else {
       blockers.push(en ? "The scholarship requires association involvement or volunteer work" : "Stipendiet kräver föreningsengagemang eller ideellt arbete");
