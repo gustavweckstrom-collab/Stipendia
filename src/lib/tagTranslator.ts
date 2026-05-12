@@ -27,8 +27,11 @@ export function useTagTranslator() {
       "ekonomiskt stöd": "Financial Support",
       "resor": "Travel"
     };
-    const normalizedTag = tag.trim().toLowerCase();
-    console.log(`Original: "${tag}", Normalized: "${normalizedTag}", Lang: ${lang}`);
+    const normalizedTag = tag
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .replace(/\s*\/\s*/g, "/");
     if (lang === "en" && enTranslations[normalizedTag]) {
       return enTranslations[normalizedTag];
     }
