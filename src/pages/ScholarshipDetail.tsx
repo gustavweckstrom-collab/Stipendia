@@ -60,7 +60,7 @@ export default function ScholarshipDetail() {
 
   const s = scholarship;
   const elig = profile ? checkEligibility(profile, s) : null;
-  const category = translateTag(primaryScholarshipCategory(s) ?? t("sch.studentRelevant");
+  const category = translateTag(primaryScholarshipCategory(s) ?? t("sch.studentRelevant"));
   const place = scholarshipLocationLabel(s) || s.organization || t("common.missing");
   const requirementTexts = distinctEligibilityRequirements(s);
   const eligibilityPoints = eligibilityHighlights(s);
@@ -141,7 +141,7 @@ export default function ScholarshipDetail() {
 
         {(s.tags ?? []).length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {s.tags.map((tg) => <span key={tg} className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-muted-foreground">{translateTag(group)}</span>)}
+            {s.tags.map((tg) => <span key={tg} className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-muted-foreground">{translateTag(tg)}</span>)}
           </div>
         )}
 
