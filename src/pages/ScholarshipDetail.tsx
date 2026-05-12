@@ -12,13 +12,13 @@ import {
   scholarshipLocationLabel,
 } from "@/lib/scholarshipData";
 import { loadProfile, loadSavedIds, toggleSaved, isApplied, toggleApplied } from "@/lib/storage";
-import { checkEligibility } from "@/lib/eligibility";
+import { checkEligibility, eligibilityState } from "@/lib/eligibility";
 import AppScreen from "@/components/layout/AppScreen";
 import { Button } from "@/components/ui/button";
 import { Building2, ExternalLink, CheckCircle2, AlertCircle, Bookmark, BookmarkCheck, Check, Info, Tag, GraduationCap, Plane, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useT, useLang } from "@/lib/i18n";
-import { ApplicationStateBadge, EligibilityBadge } from "@/components/StatusBadge";
+import { ApplicationStateBadge, EligibilityStateBadge } from "@/components/StatusBadge";
 import { toast } from "sonner";
 
 export default function ScholarshipDetail() {
@@ -63,6 +63,7 @@ export default function ScholarshipDetail() {
 
   const s = scholarship;
   const elig = profile ? checkEligibility(profile, s) : null;
+  const eligState = elig ? eligibilityState(elig) : null;
   const category = primaryScholarshipCategory(s) ?? t("sch.studentRelevant");
   const place = scholarshipLocationLabel(s) || s.organization || t("common.missing");
   const requirementTexts = distinctEligibilityRequirements(s);
@@ -98,7 +99,7 @@ export default function ScholarshipDetail() {
           <h2 className="font-bold text-lg mt-0.5 leading-tight">{s.name}</h2>
           <div className="mt-3 flex items-center justify-between gap-2">
             <p className="inline-flex rounded-full border border-primary/15 bg-white px-2.5 py-1 text-xs font-semibold text-primary">{category}</p>
-            {elig && <EligibilityBadge eligible={elig.eligible} className="text-xs" />}
+            {eligState && <EligibilityStateBadge state={eligState} className="text-xs" />}
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-full border border-success/20 bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success">
@@ -194,6 +195,14 @@ export default function ScholarshipDetail() {
                 <h3 className="font-semibold text-sm flex items-center gap-1.5 mb-2 text-success"><CheckCircle2 className="h-4 w-4" /> {t("sch.whyEligible")}</h3>
                 <ul className="list-disc space-y-1 mb-3 pl-4">
                   {elig.reasons.map((r, i) => <li key={i} className="text-[12px] text-foreground/80">{r}</li>)}
+                </ul>
+              </>
+            )}
+            {(elig.review ?? []).length > 0 && (
+              <>
+                <h3 className="font-semibold text-sm flex items-center gap-1.5 mb-2 text-muted-foreground"><AlertCircle className="h-4 w-4" /> {t("match.statusReview")}</h3>
+                <ul className="list-disc space-y-1 mb-3 pl-4">
+                  {(elig.review ?? []).map((r, i) => <li key={i} className="text-[12px] text-foreground/70">{r}</li>)}
                 </ul>
               </>
             )}

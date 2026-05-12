@@ -76,6 +76,11 @@ export function normalizeText(value: string | null | undefined): string {
   return (value ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\baf\b/g, "av")
+    .replace(/\buti\b/g, "i")
+    .replace(/inskrifven/g, "inskriven")
+    .replace(/behoefvande|beho fvande/g, "behovande")
+    .replace(/behof/g, "behov")
     .replace(/_x000D_/g, " ")
     .replace(/\s+/g, " ")
     .trim()
@@ -87,6 +92,137 @@ export function looseIncludes(a: string | null | undefined, b: string | null | u
   const right = normalizeText(b);
   if (!left || !right) return false;
   return left.includes(right) || right.includes(left);
+}
+
+type SearchRelation = {
+  base: string;
+  related: string[];
+  reasonSv: (hit: string) => string;
+  reasonEn: (hit: string) => string;
+};
+
+const STRICT_SEARCH_TERMS = new Set(["gotland"]);
+const SEARCH_WORD_CHARS = "a-z0-9";
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function hasWordLikeMatch(text: string, term: string): boolean {
+  const escaped = escapeRegExp(term);
+  const pattern = new RegExp(`(^|[^${SEARCH_WORD_CHARS}])${escaped}s?(?=$|[^${SEARCH_WORD_CHARS}])`);
+  return pattern.test(text);
+}
+
+function textMatchesSearchTerm(text: string, term: string): boolean {
+  if (!term) return false;
+  if (STRICT_SEARCH_TERMS.has(term)) return hasWordLikeMatch(text, term);
+  return text.includes(term);
+}
+
+// Small, explicit search-only geography map. It broadens search results without
+// claiming that the scholarship text contains these places as formal requirements.
+const GEOGRAPHIC_SEARCH_RELATIONS: SearchRelation[] = [
+  {
+    base: "Göteborg",
+    related: ["Chalmers", "Chalmers tekniska högskola", "Göteborgs universitet", "Västra Götaland", "Göteborgs och Bohus län"],
+    reasonSv: (hit) => `Visas genom geografisk koppling mellan ${hit} och Göteborg.`,
+    reasonEn: (hit) => `Shown through the geographic connection between ${hit} and Gothenburg.`,
+  },
+  {
+    base: "Stockholm",
+    related: ["Stockholms universitet", "Kungliga Tekniska högskolan", "KTH", "Karolinska institutet", "Solna", "Handelshögskolan i Stockholm"],
+    reasonSv: (hit) => `Visas genom geografisk koppling mellan ${hit} och Stockholm.`,
+    reasonEn: (hit) => `Shown through the geographic connection between ${hit} and Stockholm.`,
+  },
+  {
+    base: "Uppsala",
+    related: ["Uppsala universitet", "Uppsala Akademiförvaltning"],
+    reasonSv: (hit) => `Visas genom geografisk koppling mellan ${hit} och Uppsala.`,
+    reasonEn: (hit) => `Shown through the geographic connection between ${hit} and Uppsala.`,
+  },
+  {
+    base: "Lund",
+    related: ["Lunds universitet"],
+    reasonSv: (hit) => `Visas genom geografisk koppling mellan ${hit} och Lund.`,
+    reasonEn: (hit) => `Shown through the geographic connection between ${hit} and Lund.`,
+  },
+  {
+    base: "Linköping",
+    related: ["Linköpings universitet"],
+    reasonSv: (hit) => `Visas genom geografisk koppling mellan ${hit} och Linköping.`,
+    reasonEn: (hit) => `Shown through the geographic connection between ${hit} and Linköping.`,
+  },
+  {
+    base: "Umeå",
+    related: ["Umeå universitet"],
+    reasonSv: (hit) => `Visas genom geografisk koppling mellan ${hit} och Umeå.`,
+    reasonEn: (hit) => `Shown through the geographic connection between ${hit} and Umeå.`,
+  },
+  {
+    base: "Örebro",
+    related: ["Örebro universitet"],
+    reasonSv: (hit) => `Visas genom geografisk koppling mellan ${hit} och Örebro.`,
+    reasonEn: (hit) => `Shown through the geographic connection between ${hit} and Örebro.`,
+  },
+  {
+    base: "Gotland",
+    related: ["Gotlands län", "Region Gotland", "Visby"],
+    reasonSv: (hit) => `Visas genom geografisk koppling mellan ${hit} och Gotland.`,
+    reasonEn: (hit) => `Shown through the geographic connection between ${hit} and Gotland.`,
+  },
+];
+
+function uniqueNormalizedTerms(values: string[]) {
+  return Array.from(new Set(values.map(normalizeText).filter(Boolean)));
+}
+
+export function expandSearchTerms(value: string | null | undefined): string[] {
+  const normalized = normalizeText(value);
+  if (!normalized) return [];
+  const terms = [value ?? ""];
+  for (const relation of GEOGRAPHIC_SEARCH_RELATIONS) {
+    const base = normalizeText(relation.base);
+    const related = relation.related.map(normalizeText);
+    if (textMatchesSearchTerm(normalized, base)) terms.push(...relation.related);
+    if (related.some((term) => textMatchesSearchTerm(normalized, term))) terms.push(relation.base);
+  }
+  return uniqueNormalizedTerms(terms);
+}
+
+export function scholarshipSearchHaystack(scholarship: Scholarship): string {
+  return normalizeText(scholarshipSearchFields(scholarship).join(" "));
+}
+
+export function scholarshipMatchesSearchValue(scholarship: Scholarship, value: string | null | undefined): boolean {
+  const terms = expandSearchTerms(value);
+  if (terms.length === 0) return true;
+  const haystack = scholarshipSearchHaystack(scholarship);
+  return terms.some((term) => textMatchesSearchTerm(haystack, term));
+}
+
+export function scholarshipSearchRelationReasons(scholarship: Scholarship, value: string | null | undefined): string[] {
+  const normalized = normalizeText(value);
+  if (!normalized) return [];
+  const haystack = scholarshipSearchHaystack(scholarship);
+  const en = getLang() === "en";
+  const reasons: string[] = [];
+  for (const relation of GEOGRAPHIC_SEARCH_RELATIONS) {
+    const base = normalizeText(relation.base);
+    if (!textMatchesSearchTerm(normalized, base)) continue;
+    if (textMatchesSearchTerm(haystack, base)) {
+      reasons.push(en ? `Mentions ${relation.base}.` : `Texten nämner ${relation.base}.`);
+      continue;
+    }
+    for (const related of relation.related) {
+      const relatedNormalized = normalizeText(related);
+      if (textMatchesSearchTerm(haystack, relatedNormalized) && !textMatchesSearchTerm(haystack, base)) {
+        reasons.push(en ? relation.reasonEn(related) : relation.reasonSv(related));
+        break;
+      }
+    }
+  }
+  return Array.from(new Set(reasons));
 }
 
 const LOWER_PLACE_WORDS = new Set(["län", "kommun", "stad", "region", "församling"]);
@@ -269,8 +405,8 @@ export function scholarshipMatchesStudyAbroad(scholarship: Scholarship): boolean
 }
 
 // Search spans names, long descriptions, eligibility text, geography and
-// structured categories. Filtering still scans chunks gradually and renders
-// small batches, so the app does not load the whole dataset into the UI.
+// structured categories. Filtering scans chunks gradually, and pages render
+// 50 cards at a time so older phones do not need to paint the whole dataset.
 export function scholarshipSearchFields(scholarship: Scholarship): string[] {
   return [
     scholarship.name,

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Scholarship, ScholarshipIndex } from "@/data/scholarships";
 import { externalApplicationUrl, loadFirstScholarshipChunk, loadScholarshipChunk, primaryScholarshipCategory, scholarshipLocationLabel } from "@/lib/scholarshipData";
-import { checkEligibility } from "@/lib/eligibility";
+import { checkEligibility, eligibilityState, EligibilityState } from "@/lib/eligibility";
 import { isApplied, loadProfile, toggleApplied } from "@/lib/storage";
 import AppScreen from "@/components/layout/AppScreen";
 import { Button } from "@/components/ui/button";
@@ -12,18 +12,14 @@ import { useT } from "@/lib/i18n";
 import { ApplicationStateBadge, EligibilityStateBadge } from "@/components/StatusBadge";
 import { StipendiaIllustration } from "@/components/visual/StipendiaIllustration";
 
-type EligibilityState = "eligible" | "review" | "not-eligible";
+const RESULT_STEP = 50;
+
 type EligibilityItem = {
   s: Scholarship;
   state: EligibilityState;
   reasons: string[];
+  review: string[];
   blockers: string[];
-};
-
-const classify = (reasons: string[], blockers: string[]): EligibilityState => {
-  if (blockers.length === 0) return "eligible";
-  if (reasons.length > 0) return "review";
-  return "not-eligible";
 };
 
 export default function Matches() {
@@ -35,6 +31,7 @@ export default function Matches() {
   const [nextChunk, setNextChunk] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [resultPage, setResultPage] = useState(0);
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -76,17 +73,30 @@ export default function Matches() {
     if (!profile) return [] as EligibilityItem[];
     return items.map((s) => {
       const result = checkEligibility(profile, s);
-      return { s, state: classify(result.reasons, result.blockers), reasons: result.reasons, blockers: result.blockers };
+      return { s, state: eligibilityState(result), reasons: result.reasons ?? [], review: result.review ?? [], blockers: result.blockers ?? [] };
     }).sort((a, b) => {
       const order: Record<EligibilityState, number> = { eligible: 0, review: 1, "not-eligible": 2 };
       return order[a.state] - order[b.state];
     });
   }, [profile, items]);
 
-  const eligible = eligibilityItems.filter((i) => i.state === "eligible");
-  const review = eligibilityItems.filter((i) => i.state === "review");
-  const notEligible = eligibilityItems.filter((i) => i.state === "not-eligible");
+  useEffect(() => setResultPage(0), [profile]);
+
+  const totalEligible = eligibilityItems.filter((i) => i.state === "eligible").length;
+  const resultStart = resultPage * RESULT_STEP;
+  const visibleEligibilityItems = eligibilityItems.slice(resultStart, resultStart + RESULT_STEP);
+  const eligible = visibleEligibilityItems.filter((i) => i.state === "eligible");
+  const review = visibleEligibilityItems.filter((i) => i.state === "review");
+  const notEligible = visibleEligibilityItems.filter((i) => i.state === "not-eligible");
   const hasMoreChunks = Boolean(index && nextChunk < index.chunks.length);
+  const hasNextBatch = resultStart + RESULT_STEP < eligibilityItems.length || hasMoreChunks;
+  const goToNextBatch = async () => {
+    const nextStart = (resultPage + 1) * RESULT_STEP;
+    if (nextStart >= eligibilityItems.length && hasMoreChunks) await loadMore();
+    setResultPage((page) => page + 1);
+  };
+  const rangeFrom = eligibilityItems.length === 0 ? 0 : resultStart + 1;
+  const rangeTo = Math.min(resultStart + visibleEligibilityItems.length, eligibilityItems.length);
 
   if (!profile) {
     return (
@@ -107,9 +117,12 @@ export default function Matches() {
   }
 
   return (
-    <AppScreen title={t("match.title")} subtitle={t("match.subtitle", { n: eligible.length })}>
+    <AppScreen title={t("match.title")} subtitle={t("match.subtitle", { n: totalEligible })}>
       <div className="space-y-5">
         {loading && <div className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">{t("sch.loading")}</div>}
+        {!loading && eligibilityItems.length > 0 && (
+          <p className="px-1 text-[11px] text-muted-foreground">{t("sch.resultRange", { from: rangeFrom, to: rangeTo, t: eligibilityItems.length })}</p>
+        )}
 
         {!loading && eligible.length === 0 && (
           <div className="rounded-[30px] border border-border/70 bg-card p-4 text-center shadow-soft">
@@ -119,15 +132,22 @@ export default function Matches() {
           </div>
         )}
 
-        <EligibilitySection title={t("match.eligibleTitle")} icon={CheckCircle2} items={eligible.slice(0, 50)} />
-        <EligibilitySection title={t("match.reviewTitle")} subtitle={t("match.reviewSub")} icon={CircleHelp} items={review.slice(0, 50)} />
-        <EligibilitySection title={t("match.notEligibleTitle")} subtitle={t("match.notEligibleSub")} icon={AlertCircle} items={notEligible.slice(0, 50)} />
+        <EligibilitySection title={t("match.eligibleTitle")} icon={CheckCircle2} items={eligible} />
+        <EligibilitySection title={t("match.reviewTitle")} subtitle={t("match.reviewSub")} icon={CircleHelp} items={review} />
+        <EligibilitySection title={t("match.notEligibleTitle")} subtitle={t("match.notEligibleSub")} icon={AlertCircle} items={notEligible} />
 
-        {hasMoreChunks && (
-          <Button variant="outline" className="w-full rounded-xl" onClick={loadMore} disabled={loadingMore}>
-            {loadingMore ? t("sch.loading") : t("sch.loadMore")}
-          </Button>
-        )}
+        <div className="grid grid-cols-2 gap-2">
+          {resultPage > 0 && (
+            <Button variant="outline" className="rounded-xl" onClick={() => setResultPage((page) => Math.max(0, page - 1))}>
+              {t("sch.previousBatch")}
+            </Button>
+          )}
+          {hasNextBatch && (
+            <Button variant="outline" className={resultPage === 0 ? "col-span-2 rounded-xl" : "rounded-xl"} onClick={goToNextBatch} disabled={loadingMore}>
+              {loadingMore ? t("sch.loading") : t("sch.nextBatch")}
+            </Button>
+          )}
+        </div>
       </div>
     </AppScreen>
   );
@@ -148,11 +168,11 @@ function EligibilitySection({ title, subtitle, icon: Icon, items }: { title: str
 
 function EligibilityCard({ item }: { item: EligibilityItem }) {
   const t = useT();
-  const { s, state, reasons, blockers } = item;
+  const { s, state, reasons, review, blockers } = item;
   const applied = isApplied(s.id);
   const category = primaryScholarshipCategory(s) ?? t("sch.studentRelevant");
   const location = scholarshipLocationLabel(s) || s.organization;
-  const notes = state === "eligible" ? reasons : blockers;
+  const notes = state === "eligible" ? reasons : state === "review" ? [...review, ...reasons].slice(0, 3) : blockers;
 
   return (
     <div className="p-4 bg-card rounded-2xl border border-border/70 shadow-soft transition-transform active:scale-[0.99]">
@@ -177,7 +197,7 @@ function EligibilityCard({ item }: { item: EligibilityItem }) {
       {notes.length > 0 && (
         <div className="mt-3 rounded-xl bg-secondary/60 border border-border/60 p-2.5">
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-            <Sparkles className="h-3 w-3" /> {state === "eligible" ? t("sch.whyEligible") : t("sch.whyNot")}
+            <Sparkles className="h-3 w-3" /> {state === "eligible" ? t("sch.whyEligible") : state === "review" ? t("sch.whyShown") : t("sch.whyNot")}
           </p>
           <ul className="mt-1.5 space-y-1">
             {notes.slice(0, 3).map((note, i) => (

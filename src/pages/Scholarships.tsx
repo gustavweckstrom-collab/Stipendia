@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Scholarship, ScholarshipIndex } from "@/data/scholarships";
 import {
@@ -13,8 +13,10 @@ import {
   scholarshipMatchesEducationLevel,
   scholarshipMatchesStudyAbroad,
   scholarshipMatchesTravel,
-  scholarshipSearchFields,
   scholarshipLocationLabel,
+  scholarshipMatchesSearchValue,
+  scholarshipSearchHaystack,
+  scholarshipSearchRelationReasons,
 } from "@/lib/scholarshipData";
 import AppScreen from "@/components/layout/AppScreen";
 import { Input } from "@/components/ui/input";
@@ -28,13 +30,15 @@ import {
 } from "@/components/ui/sheet";
 import { SearchableCombobox } from "@/components/ui/SearchableCombobox";
 import { AMNESOMRADE_OPTIONS, EDUCATION_LEVEL_OPTIONS, HEMORT_SUGGESTIONS, SCHOLARSHIP_TYPES, ScholarshipType, STUDIEORT_OPTIONS, UNIVERSITET_OPTIONS } from "@/types/profile";
-import { checkEligibility, scholarshipTypes } from "@/lib/eligibility";
+import { checkEligibility, eligibilityState, scholarshipTypes } from "@/lib/eligibility";
 import { loadAppliedIds, loadProfile, loadSavedIds } from "@/lib/storage";
-import { ApplicationStateBadge, EligibilityBadge } from "@/components/StatusBadge";
+import { ApplicationStateBadge, EligibilityStateBadge } from "@/components/StatusBadge";
 import { StipendiaIllustration } from "@/components/visual/StipendiaIllustration";
 
+// Keep list rendering capped to one mobile-friendly batch at a time.
 const RESULT_STEP = 50;
 const FILTER_EDUCATION_LEVEL_OPTIONS = EDUCATION_LEVEL_OPTIONS;
+const TYPE_PARAM = "typ";
 
 type ScholarshipFilters = {
   query: string;
@@ -50,16 +54,63 @@ type ScholarshipFilters = {
   profile: ReturnType<typeof loadProfile>;
 };
 
+function parseScholarshipTypes(params: URLSearchParams): ScholarshipType[] {
+  const values = params.getAll(TYPE_PARAM);
+  return SCHOLARSHIP_TYPES.filter((type) => values.includes(type));
+}
+
+function buildScholarshipParams({
+  view,
+  query,
+  field,
+  uni,
+  birthPlace,
+  residencePlace,
+  loc,
+  educationLevel,
+  travelOnly,
+  types,
+  eligibleOnly,
+}: {
+  view: "all" | "saved";
+  query: string;
+  field: string;
+  uni: string;
+  birthPlace: string;
+  residencePlace: string;
+  loc: string;
+  educationLevel: string;
+  travelOnly: boolean;
+  types: ScholarshipType[];
+  eligibleOnly: boolean;
+}) {
+  const params = new URLSearchParams();
+  if (view === "saved") params.set("sparade", "1");
+  if (query.trim()) params.set("q", query.trim());
+  if (field) params.set("falt", field);
+  if (uni.trim()) params.set("universitet", uni.trim());
+  if (birthPlace.trim()) params.set("fodelseort", birthPlace.trim());
+  if (residencePlace.trim()) params.set("bostadsort", residencePlace.trim());
+  if (loc.trim()) params.set("studieort", loc.trim());
+  if (educationLevel) params.set("niva", educationLevel);
+  if (travelOnly) params.set("resa", "1");
+  types.forEach((type) => params.append(TYPE_PARAM, type));
+  if (eligibleOnly) params.set("behorig", "1");
+  return params;
+}
+
+function sameScholarshipTypes(a: ScholarshipType[], b: ScholarshipType[]) {
+  return a.length === b.length && a.every((type) => b.includes(type));
+}
+
 function scholarshipHasText(s: Scholarship, value: string) {
-  if (!value.trim()) return true;
-  const needle = normalizeText(value);
-  return scholarshipSearchFields(s).some((text) => normalizeText(text).includes(needle));
+  return scholarshipMatchesSearchValue(s, value);
 }
 
 function scholarshipMatchesFilters(s: Scholarship, filters: ScholarshipFilters) {
   const q = normalizeText(filters.query);
   if (filters.query) {
-    const hit = scholarshipSearchFields(s).some((value) => normalizeText(value).includes(q));
+    const hit = scholarshipMatchesSearchValue(s, q);
     if (!hit) return false;
   }
   if (filters.field) {
@@ -67,12 +118,7 @@ function scholarshipMatchesFilters(s: Scholarship, filters: ScholarshipFilters) 
     if (!(fields.some((f) => looseIncludes(f, filters.field)) || looseIncludes(filters.field, (s.tags ?? []).join(" ")))) return false;
   }
   if (filters.uni) {
-    const universityHit = [
-      ...(s.eligibleUniversities ?? []),
-      s.description,
-      ...(s.criteria ?? []),
-      ...(s.tags ?? []),
-    ].some((value) => looseIncludes(value, filters.uni));
+    const universityHit = scholarshipMatchesSearchValue(s, filters.uni);
     if (!universityHit) return false;
   }
   if (filters.birthPlace && !scholarshipHasText(s, filters.birthPlace)) return false;
@@ -90,22 +136,45 @@ function scholarshipMatchesFilters(s: Scholarship, filters: ScholarshipFilters) 
   return true;
 }
 
+function scholarshipResultScore(s: Scholarship, filters: ScholarshipFilters) {
+  const query = normalizeText(filters.query);
+  const haystack = scholarshipSearchHaystack(s);
+  let score = 0;
+  if (query) {
+    const name = normalizeText(s.name);
+    if (name === query) score += 90;
+    else if (name.includes(query)) score += 60;
+    else if (haystack.includes(query)) score += 20;
+  }
+  if (filters.field && [...(s.eligibleFields ?? []), ...(s.fieldOfStudy ?? [])].some((field) => looseIncludes(field, filters.field))) score += 35;
+  if (filters.uni && (s.eligibleUniversities ?? []).some((uni) => looseIncludes(uni, filters.uni))) score += 35;
+  if (filters.loc && scholarshipMatchesSearchValue(s, filters.loc)) score += 20;
+  if (filters.birthPlace && scholarshipMatchesSearchValue(s, filters.birthPlace)) score += 15;
+  if (filters.residencePlace && scholarshipMatchesSearchValue(s, filters.residencePlace)) score += 15;
+  if ((s.targetGroup ?? []).some((group) => normalizeText(group).includes("student"))) score += 12;
+  if ((s.criteria ?? []).length > 0 || (s.targetGroup ?? []).length > 0) score += 6;
+  if (scholarshipMatchesTravel(s)) score += filters.travelOnly ? 20 : 3;
+  if (/(doktorand|forskarutbildning|forskningsprojekt|postdok|professor|gymnasieelev|grundskoleelev|forening|foretag)/i.test(haystack)) score -= 18;
+  return score;
+}
+
 export default function Scholarships() {
   const t = useT();
   const optionLabel = useOptionLabel();
   const [searchParams, setSearchParams] = useSearchParams();
-  const savedParam = searchParams.get("sparade");
-  const [view, setView] = useState<"all" | "saved">(() => savedParam === "1" ? "saved" : "all");
-  const [query, setQuery] = useState("");
-  const [field, setField] = useState<string>("");
-  const [uni, setUni] = useState<string>("");
-  const [birthPlace, setBirthPlace] = useState<string>("");
-  const [residencePlace, setResidencePlace] = useState<string>("");
-  const [loc, setLoc] = useState<string>("");
-  const [educationLevel, setEducationLevel] = useState<string>("");
-  const [travelOnly, setTravelOnly] = useState(false);
-  const [types, setTypes] = useState<ScholarshipType[]>([]);
-  const [eligibleOnly, setEligibleOnly] = useState(false);
+  const searchParamString = searchParams.toString();
+  const syncingFromUrl = useRef(false);
+  const [view, setView] = useState<"all" | "saved">(() => searchParams.get("sparade") === "1" ? "saved" : "all");
+  const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
+  const [field, setField] = useState<string>(() => searchParams.get("falt") ?? "");
+  const [uni, setUni] = useState<string>(() => searchParams.get("universitet") ?? "");
+  const [birthPlace, setBirthPlace] = useState<string>(() => searchParams.get("fodelseort") ?? "");
+  const [residencePlace, setResidencePlace] = useState<string>(() => searchParams.get("bostadsort") ?? "");
+  const [loc, setLoc] = useState<string>(() => searchParams.get("studieort") ?? "");
+  const [educationLevel, setEducationLevel] = useState<string>(() => searchParams.get("niva") ?? "");
+  const [travelOnly, setTravelOnly] = useState(() => searchParams.get("resa") === "1");
+  const [types, setTypes] = useState<ScholarshipType[]>(() => parseScholarshipTypes(searchParams));
+  const [eligibleOnly, setEligibleOnly] = useState(() => searchParams.get("behorig") === "1");
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState(loadProfile());
   const [savedIds, setSavedIds] = useState<string[]>([]);
@@ -118,19 +187,14 @@ export default function Scholarships() {
   const [nextChunk, setNextChunk] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(RESULT_STEP);
+  const [resultPage, setResultPage] = useState(0);
   const [datasetMatches, setDatasetMatches] = useState<Scholarship[]>([]);
   const [datasetMatchTotal, setDatasetMatchTotal] = useState(0);
   const [datasetScanning, setDatasetScanning] = useState(false);
   const [datasetScannedChunks, setDatasetScannedChunks] = useState(0);
 
   useEffect(() => {
-    setView(savedParam === "1" ? "saved" : "all");
-  }, [savedParam]);
-
-  useEffect(() => {
-    const typeParam = searchParams.get("typ");
-    const validTypes = SCHOLARSHIP_TYPES.filter((type) => typeParam === type);
+    syncingFromUrl.current = true;
     setQuery(searchParams.get("q") ?? "");
     setField(searchParams.get("falt") ?? "");
     setUni(searchParams.get("universitet") ?? "");
@@ -139,13 +203,40 @@ export default function Scholarships() {
     setLoc(searchParams.get("studieort") ?? "");
     setEducationLevel(searchParams.get("niva") ?? "");
     setTravelOnly(searchParams.get("resa") === "1");
-    setTypes(validTypes);
-  }, [searchParams]);
+    setEligibleOnly(searchParams.get("behorig") === "1");
+    setView(searchParams.get("sparade") === "1" ? "saved" : "all");
+    const validTypes = parseScholarshipTypes(searchParams);
+    setTypes((current) => sameScholarshipTypes(current, validTypes) ? current : validTypes);
+  }, [searchParamString]);
+
+  useEffect(() => {
+    if (syncingFromUrl.current) {
+      syncingFromUrl.current = false;
+      return;
+    }
+
+    const nextParams = buildScholarshipParams({
+      view,
+      query,
+      field,
+      uni,
+      birthPlace,
+      residencePlace,
+      loc,
+      educationLevel,
+      travelOnly,
+      types,
+      eligibleOnly,
+    });
+
+    if (nextParams.toString() !== searchParamString) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [birthPlace, educationLevel, eligibleOnly, field, loc, query, residencePlace, searchParamString, setSearchParams, travelOnly, types, uni, view]);
 
   const setBrowseView = useCallback((next: "all" | "saved") => {
     setView(next);
-    setSearchParams(next === "saved" ? { sparade: "1" } : {});
-  }, [setSearchParams]);
+  }, []);
 
   useEffect(() => {
     const r = () => {
@@ -188,7 +279,7 @@ export default function Scholarships() {
     return () => { cancelled = true; };
   }, [savedIds]);
 
-  useEffect(() => setVisibleCount(RESULT_STEP), [view, query, field, uni, birthPlace, residencePlace, loc, educationLevel, travelOnly, types, eligibleOnly]);
+  useEffect(() => setResultPage(0), [view, query, field, uni, birthPlace, residencePlace, loc, educationLevel, travelOnly, types, eligibleOnly]);
 
   const loadMore = useCallback(async (batchSize = 1) => {
     if (!index || loadingMore || nextChunk >= index.chunks.length) return;
@@ -237,7 +328,12 @@ export default function Scholarships() {
     profile,
   }), [query, field, uni, birthPlace, residencePlace, loc, educationLevel, travelOnly, types, eligibleOnly, profile]);
 
-  const localFiltered = useMemo(() => sourceItems.filter((s) => scholarshipMatchesFilters(s, filters)), [sourceItems, filters]);
+  const localFiltered = useMemo(() => sourceItems
+    .filter((s) => scholarshipMatchesFilters(s, filters))
+    .sort((a, b) =>
+      scholarshipResultScore(b, filters) - scholarshipResultScore(a, filters) ||
+      a.name.localeCompare(b.name, "sv")
+    ), [sourceItems, filters]);
 
   useEffect(() => {
     if (!datasetFilterActive || !index) {
@@ -258,6 +354,15 @@ export default function Scholarships() {
       const candidateFiles = field && index.fieldChunks?.[field]?.chunks?.length ? index.fieldChunks[field].chunks : allFiles;
       const matches: Scholarship[] = [];
       let totalMatches = 0;
+      const pageStart = resultPage * RESULT_STEP;
+      const pageEnd = pageStart + RESULT_STEP;
+      const updatePageMatches = () => {
+        const ranked = [...matches].sort((a, b) =>
+          scholarshipResultScore(b, filters) - scholarshipResultScore(a, filters) ||
+          a.name.localeCompare(b.name, "sv")
+        );
+        setDatasetMatches(ranked.slice(pageStart, pageEnd));
+      };
 
       for (let i = 0; i < candidateFiles.length; i += 1) {
         const chunk = await loadScholarshipChunk(candidateFiles[i]);
@@ -265,17 +370,18 @@ export default function Scholarships() {
         for (const scholarship of chunk) {
           if (scholarshipMatchesFilters(scholarship, filters)) {
             totalMatches += 1;
-            if (matches.length < visibleCount) matches.push(scholarship);
+            matches.push(scholarship);
           }
         }
         if (cancelled) return;
-        setDatasetMatches([...matches]);
+        updatePageMatches();
         setDatasetMatchTotal(totalMatches);
         setDatasetScannedChunks(i + 1);
         await new Promise((resolve) => window.setTimeout(resolve, 0));
       }
 
       if (!cancelled) {
+        updatePageMatches();
         setDatasetScanning(false);
       }
     };
@@ -287,7 +393,7 @@ export default function Scholarships() {
     });
 
     return () => { cancelled = true; };
-  }, [datasetFilterActive, field, filters, index, visibleCount]);
+  }, [datasetFilterActive, field, filters, index, resultPage]);
 
   const resetFilters = () => {
     setField("");
@@ -305,15 +411,18 @@ export default function Scholarships() {
   const filtered = datasetFilterActive ? datasetMatches : localFiltered;
   const total = view === "saved" ? savedItems.length : index?.total ?? items.length;
   const hasFilter = hasSearchOrFilter;
-  const countLabel = view === "saved"
-    ? t("sch.savedLoaded", { n: filtered.length, t: savedItems.length })
+  const resultStart = resultPage * RESULT_STEP;
+  const visibleItems = datasetFilterActive ? filtered : filtered.slice(resultStart, resultStart + RESULT_STEP);
+  const totalForRange = view === "saved"
+    ? (hasSearchOrFilter ? localFiltered.length : savedItems.length)
     : datasetFilterActive
-      ? datasetScanning
-        ? t("sch.filteredScanning", { n: datasetMatchTotal, c: datasetScannedChunks, t: index?.chunks.length ?? 0 })
-        : t("sch.filteredTotal", { n: filtered.length, t: datasetMatchTotal })
-      : t("sch.loadedCount", { n: items.length, t: total });
-  const visibleItems = datasetFilterActive ? filtered : filtered.slice(0, visibleCount);
-  const hasMoreLoadedResults = datasetFilterActive ? filtered.length < datasetMatchTotal : visibleCount < filtered.length;
+      ? datasetMatchTotal
+      : total;
+  const rangeFrom = totalForRange === 0 || visibleItems.length === 0 ? 0 : resultStart + 1;
+  const rangeTo = totalForRange === 0 || visibleItems.length === 0 ? 0 : Math.min(resultStart + visibleItems.length, totalForRange);
+  const countLabel = datasetFilterActive && datasetScanning
+    ? t("sch.filteredScanning", { n: datasetMatchTotal, c: datasetScannedChunks, t: index?.chunks.length ?? 0 })
+    : t("sch.resultRange", { from: rangeFrom, to: rangeTo, t: totalForRange });
   const filterSheetCount = datasetFilterActive ? datasetMatchTotal : filtered.length;
   const remainingChunkFiles = useMemo(() => {
     if (!index) return [];
@@ -322,6 +431,16 @@ export default function Scholarships() {
     return candidates.filter((file) => !loadedChunkFiles.includes(file));
   }, [field, index, loadedChunkFiles, nextChunk]);
   const hasMoreChunks = !datasetFilterActive && view === "all" && remainingChunkFiles.length > 0;
+  const hasNextBatch = datasetFilterActive
+    ? resultStart + RESULT_STEP < datasetMatchTotal
+    : resultStart + RESULT_STEP < localFiltered.length || hasMoreChunks;
+  const goToNextBatch = async () => {
+    const nextStart = (resultPage + 1) * RESULT_STEP;
+    if (!datasetFilterActive && view === "all" && nextStart >= localFiltered.length && hasMoreChunks) {
+      await loadMore(1);
+    }
+    setResultPage((page) => page + 1);
+  };
   const isLoadingView = loading || (view === "saved" && savedLoading) || (datasetFilterActive && datasetScanning && filtered.length === 0);
   const savedEmpty = view === "saved" && savedIds.length === 0;
 
@@ -486,14 +605,19 @@ export default function Scholarships() {
                   profile={profile}
                   saved={savedIds.includes(s.id)}
                   applied={appliedIds.includes(s.id)}
+                  relationSearchValues={[query, uni, birthPlace, residencePlace, loc]}
                 />
               ))}
             </div>
-            <div className="space-y-2">
-              {hasMoreLoadedResults && <Button variant="outline" className="w-full rounded-xl" onClick={() => setVisibleCount((count) => count + RESULT_STEP)} disabled={datasetFilterActive && datasetScanning}>{datasetFilterActive && datasetScanning ? t("sch.loading") : t("sch.loadMore")}</Button>}
-              {!hasMoreLoadedResults && hasMoreChunks && (
-                <Button variant="outline" className="w-full rounded-xl" onClick={async () => { await loadMore(1); setVisibleCount((count) => count + RESULT_STEP); }} disabled={loadingMore}>
-                  {loadingMore ? t("sch.loading") : t("sch.loadMore")}
+            <div className="grid grid-cols-2 gap-2">
+              {resultPage > 0 && (
+                <Button variant="outline" className="rounded-xl" onClick={() => setResultPage((page) => Math.max(0, page - 1))}>
+                  {t("sch.previousBatch")}
+                </Button>
+              )}
+              {hasNextBatch && (
+                <Button variant="outline" className={cn("rounded-xl", resultPage === 0 && "col-span-2")} onClick={goToNextBatch} disabled={loadingMore || (datasetFilterActive && datasetScanning)}>
+                  {loadingMore || (datasetFilterActive && datasetScanning) ? t("sch.loading") : t("sch.nextBatch")}
                 </Button>
               )}
             </div>
@@ -509,17 +633,21 @@ function BrowseCard({
   profile,
   saved,
   applied,
+  relationSearchValues,
 }: {
   scholarship: Scholarship;
   profile: ReturnType<typeof loadProfile>;
   saved: boolean;
   applied: boolean;
+  relationSearchValues: string[];
 }) {
   const t = useT();
-  const eligible = profile ? checkEligibility(profile, s).eligible : null;
+  const eligibilityResult = profile ? checkEligibility(profile, s) : null;
+  const state = eligibilityResult ? eligibilityState(eligibilityResult) : null;
   const category = primaryScholarshipCategory(s) ?? t("sch.studentRelevant");
   const location = scholarshipLocationLabel(s);
-  const highlights = eligibilityHighlights(s).slice(0, 3);
+  const relationHighlights = relationSearchValues.flatMap((value) => scholarshipSearchRelationReasons(s, value));
+  const highlights = [...relationHighlights, ...eligibilityHighlights(s)].slice(0, 3);
   const directApplication = hasDirectApplicationTarget(s);
   const isTravel = scholarshipMatchesTravel(s);
   const isStudyAbroad = scholarshipMatchesStudyAbroad(s);
@@ -537,7 +665,7 @@ function BrowseCard({
           )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          {eligible !== null && <EligibilityBadge eligible={eligible} />}
+          {state && <EligibilityStateBadge state={state} />}
         </div>
       </div>
 
