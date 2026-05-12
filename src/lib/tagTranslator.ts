@@ -4,6 +4,8 @@ export function useTagTranslator() {
   const lang = useLang();
 
   return (tag: string) => {
+    if (!tag) return tag;
+    
     const enTranslations: Record<string, string> = {
       "studenter": "Students",
       "behövande": "Need-based",
@@ -25,9 +27,9 @@ export function useTagTranslator() {
       "ekonomiskt stöd": "Financial Support",
       "resor": "Travel"
     };
-
-    if (lang === "en" && enTranslations[tag]) {
-      return enTranslations[tag];
+    const normalizedTag = tag.trim().toLowerCase();
+    if (lang === "en" && enTranslations[normalizedTag]) {
+      return enTranslations[normalizedTag];
     }
     
     return tag; 
