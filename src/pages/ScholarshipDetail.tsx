@@ -1,3 +1,4 @@
+import { useTagTranslator } from "@/lib/tagTranslator";
 import { useParams } from "react-router-dom";
 import { Scholarship } from "@/data/scholarships";
 import {
@@ -20,11 +21,11 @@ import { useEffect, useState } from "react";
 import { useT, useLang } from "@/lib/i18n";
 import { ApplicationStateBadge, EligibilityBadge } from "@/components/StatusBadge";
 import { toast } from "sonner";
-import { useTagTranslator } from "@/lib/tagTranslator";
 
 export default function ScholarshipDetail() {
   const t = useT();
   const lang = useLang();
+  const translateTag = useTagTranslator();
   const { id } = useParams();
   const profile = loadProfile();
   const [scholarship, setScholarship] = useState<Scholarship | null>(null);
