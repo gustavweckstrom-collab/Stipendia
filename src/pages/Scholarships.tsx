@@ -1,3 +1,4 @@
+import { useTagTranslator } from "@/lib/tagTranslator";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Scholarship, ScholarshipIndex } from "@/data/scholarships";
@@ -516,6 +517,7 @@ function BrowseCard({
   applied: boolean;
 }) {
   const t = useT();
+  const translateTag = useTagTranslator();
   const eligible = profile ? checkEligibility(profile, s).eligible : null;
   const category = primaryScholarshipCategory(s) ?? t("sch.studentRelevant");
   const location = scholarshipLocationLabel(s);
