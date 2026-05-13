@@ -30,12 +30,13 @@ export function useTagTranslator() {
     const normalizedTag = tag
       .trim()
       .toLowerCase()
+      .replace(/[\u200B-\u200D\uFEFF]/g, "")
       .replace(/\s+/g, " ")
       .replace(/\s*\/\s*/g, "/");
     if (lang === "en" && enTranslations[normalizedTag]) {
       return enTranslations[normalizedTag];
     }
     
-    return tag; 
+    return tag.charAt(0).toUpperCase() + tag.slice(1); 
   };
 }
