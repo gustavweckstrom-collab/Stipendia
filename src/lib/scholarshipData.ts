@@ -211,7 +211,7 @@ export function scholarshipSearchRelationReasons(scholarship: Scholarship, value
     const base = normalizeText(relation.base);
     if (!textMatchesSearchTerm(normalized, base)) continue;
     if (textMatchesSearchTerm(haystack, base)) {
-      reasons.push(en ? `Mentions ${relation.base}.` : `Texten nämner ${relation.base}.`);
+      reasons.push(en ? `The scholarship description mentions ${relation.base}.` : `Beskrivningen av stipendiet nämner ${relation.base}.`);
       continue;
     }
     for (const related of relation.related) {

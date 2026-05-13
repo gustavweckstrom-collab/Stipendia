@@ -226,19 +226,7 @@ export function PersonalDeadlineEditor({
       </div>
       <div className="grid gap-2">
         <label className="text-[12px] font-semibold text-muted-foreground">{t("deadline.remindMe")}</label>
-        <div className="relative">
-          <Clock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <select
-            value={reminder}
-            onChange={(event) => setReminder(event.target.value)}
-            className="h-11 w-full rounded-xl border border-transparent bg-secondary pl-9 pr-3 text-sm font-medium outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="none">{t("deadline.noReminder")}</option>
-            <option value="7">{t("deadline.reminder7")}</option>
-            <option value="3">{t("deadline.reminder3")}</option>
-            <option value="1">{t("deadline.reminder1")}</option>
-          </select>
-        </div>
+        <ReminderSelect value={reminder} onChange={setReminder} />
       </div>
       {date && (
         <p className="text-[12px] text-muted-foreground">
@@ -382,19 +370,7 @@ export function PersonalDeadlineQuickEdit({
           ))}
         </DateSelect>
       </div>
-      <div className="relative mt-2">
-        <Clock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <select
-          value={reminder}
-          onChange={(event) => setReminder(event.target.value)}
-          className="h-11 w-full rounded-xl border border-transparent bg-secondary pl-9 pr-3 text-sm font-medium outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
-        >
-          <option value="none">{t("deadline.noReminder")}</option>
-          <option value="7">{t("deadline.reminder7")}</option>
-          <option value="3">{t("deadline.reminder3")}</option>
-          <option value="1">{t("deadline.reminder1")}</option>
-        </select>
-      </div>
+      <ReminderSelect value={reminder} onChange={setReminder} className="mt-2" />
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Button type="button" size="sm" className="rounded-xl" onClick={save} disabled={!date}>{t("common.save")}</Button>
         <Button type="button" size="sm" variant="outline" className="rounded-xl" onClick={() => setOpen(false)}>{t("common.cancel")}</Button>
@@ -422,5 +398,24 @@ function DateSelect({ value, onChange, label, children }: { value: string; onCha
       <option value="">{label}</option>
       {children}
     </select>
+  );
+}
+
+function ReminderSelect({ value, onChange, className }: { value: string; onChange: (value: string) => void; className?: string }) {
+  const t = useT();
+  return (
+    <div className={cn("flex min-h-11 items-center gap-2 rounded-xl bg-secondary px-3", className)}>
+      <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-11 min-w-0 flex-1 bg-transparent text-sm font-medium outline-none"
+      >
+        <option value="none">{t("deadline.noReminder")}</option>
+        <option value="7">{t("deadline.reminder7")}</option>
+        <option value="3">{t("deadline.reminder3")}</option>
+        <option value="1">{t("deadline.reminder1")}</option>
+      </select>
+    </div>
   );
 }
