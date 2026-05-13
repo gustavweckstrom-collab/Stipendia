@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Scholarship, ScholarshipIndex } from "@/data/scholarships";
 import { externalApplicationUrl, loadFirstScholarshipChunk, loadScholarshipChunk, primaryScholarshipCategory, scholarshipLocationLabel } from "@/lib/scholarshipData";
 import { checkEligibility, eligibilityState, EligibilityState } from "@/lib/eligibility";
 import { isApplied, loadProfile, toggleApplied } from "@/lib/storage";
 import AppScreen from "@/components/layout/AppScreen";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Building2, Check, CheckCircle2, CircleHelp, ExternalLink, ShieldCheck, Sparkles, Tag, UserPlus } from "lucide-react";
+import { Building2, Check, CheckCircle2, CircleHelp, ExternalLink, ShieldCheck, Sparkles, Tag, UserPlus } from "lucide-react";
 import { StudentProfile } from "@/types/profile";
 import { useT } from "@/lib/i18n";
 import { ApplicationStateBadge, EligibilityStateBadge } from "@/components/StatusBadge";
@@ -23,6 +23,8 @@ type EligibilityItem = {
   blockers: string[];
 };
 
+type EligibilityView = "eligible" | "review";
+
 export default function Matches() {
   const t = useT();
   const navigate = useNavigate();
@@ -33,7 +35,7 @@ export default function Matches() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [resultPage, setResultPage] = useState(0);
-  const [selectedState, setSelectedState] = useState<EligibilityState>("eligible");
+  const [selectedState, setSelectedState] = useState<EligibilityView>("eligible");
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -86,12 +88,10 @@ export default function Matches() {
 
   const groupedItems = useMemo(() => ({
     eligible: eligibilityItems.filter((i) => i.state === "eligible"),
-    review: eligibilityItems.filter((i) => i.state === "review"),
-    "not-eligible": eligibilityItems.filter((i) => i.state === "not-eligible"),
+    review: eligibilityItems.filter((i) => i.state !== "eligible"),
   }), [eligibilityItems]);
   const totalEligible = groupedItems.eligible.length;
   const totalReview = groupedItems.review.length;
-  const totalNotEligible = groupedItems["not-eligible"].length;
   const selectedItems = groupedItems[selectedState];
   const resultStart = resultPage * RESULT_STEP;
   const visibleEligibilityItems = selectedItems.slice(resultStart, resultStart + RESULT_STEP);
@@ -106,19 +106,13 @@ export default function Matches() {
   const rangeTo = Math.min(resultStart + visibleEligibilityItems.length, selectedItems.length);
   const selectedLabel = selectedState === "eligible"
     ? t("match.labelEligible")
-    : selectedState === "review"
-      ? t("match.labelReview")
-      : t("match.labelNotEligible");
+    : t("match.labelReview");
   const selectedTitle = selectedState === "eligible"
     ? t("match.eligibleTitle")
-    : selectedState === "review"
-      ? t("match.reviewTitle")
-      : t("match.notEligibleTitle");
+    : t("match.reviewTitle");
   const selectedSubtitle = selectedState === "review"
     ? t("match.reviewSub")
-    : selectedState === "not-eligible"
-      ? t("match.notEligibleSub")
-      : undefined;
+    : undefined;
 
   if (!profile) {
     return (
@@ -145,12 +139,11 @@ export default function Matches() {
         {!loading && eligibilityItems.length > 0 && (
           <>
             <div className="rounded-2xl border border-border/60 bg-secondary/45 p-3 text-[12px] text-muted-foreground">
-              {t("match.loadedCounts", { eligible: totalEligible, review: totalReview, notEligible: totalNotEligible })}
+              {t("match.loadedCounts", { eligible: totalEligible, review: totalReview })}
             </div>
-            <div className="grid grid-cols-3 gap-1 rounded-2xl border border-border/70 bg-secondary/70 p-1">
+            <div className="grid grid-cols-2 gap-1 rounded-2xl border border-border/70 bg-secondary/70 p-1">
               <StatusTab active={selectedState === "eligible"} onClick={() => setSelectedState("eligible")} label={t("match.eligibleTitle")} count={totalEligible} />
               <StatusTab active={selectedState === "review"} onClick={() => setSelectedState("review")} label={t("match.reviewTitle")} count={totalReview} />
-              <StatusTab active={selectedState === "not-eligible"} onClick={() => setSelectedState("not-eligible")} label={t("match.notEligibleTitle")} count={totalNotEligible} />
             </div>
             <p className="px-1 text-[11px] text-muted-foreground">
               {selectedItems.length > 0
@@ -171,7 +164,7 @@ export default function Matches() {
         <EligibilitySection
           title={`${selectedTitle} (${selectedItems.length})`}
           subtitle={selectedSubtitle}
-          icon={selectedState === "eligible" ? CheckCircle2 : selectedState === "review" ? CircleHelp : AlertCircle}
+          icon={selectedState === "eligible" ? CheckCircle2 : CircleHelp}
           items={visibleEligibilityItems}
         />
 
@@ -222,26 +215,40 @@ function EligibilitySection({ title, subtitle, icon: Icon, items }: { title: str
 
 function EligibilityCard({ item }: { item: EligibilityItem }) {
   const t = useT();
+  const navigate = useNavigate();
   const { s, state, reasons, review, blockers } = item;
   const applied = isApplied(s.id);
   const category = primaryScholarshipCategory(s) ?? t("sch.studentRelevant");
   const location = scholarshipLocationLabel(s) || s.organization;
-  const notes = state === "eligible" ? reasons : state === "review" ? [...review, ...reasons].slice(0, 3) : blockers;
+  const displayState: EligibilityState = state === "not-eligible" ? "review" : state;
+  const notes = state === "eligible" ? reasons : [...review, ...blockers, ...reasons].filter(Boolean).slice(0, 3);
+  const openDetail = () => navigate(`/stipendier/${s.id}`);
 
   return (
-    <div className={cn(
-      "p-4 bg-card rounded-2xl border border-border/70 shadow-soft transition-transform active:scale-[0.99]",
-      applied && "border-success/35 bg-success-soft/20"
-    )}>
+    <article
+      role="link"
+      tabIndex={0}
+      onClick={openDetail}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openDetail();
+        }
+      }}
+      className={cn(
+        "group cursor-pointer p-4 bg-card rounded-2xl border border-border/70 shadow-soft transition-all active:scale-[0.99] hover:shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+        applied && "border-success/50 bg-success-soft/75"
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
-        <Link to={`/stipendier/${s.id}`} className="block min-w-0">
-          <h3 className="font-semibold text-[15px] leading-snug hover:text-primary transition-colors">{s.name}</h3>
+        <div className="block min-w-0">
+          <h3 className="font-semibold text-[15px] leading-snug group-hover:text-primary transition-colors">{s.name}</h3>
           <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
             <Building2 className="h-3 w-3" /> {location}
           </p>
-        </Link>
+        </div>
         <div className="flex flex-col items-end gap-1">
-          <EligibilityStateBadge state={state} />
+          <EligibilityStateBadge state={displayState} />
           {applied && <ApplicationStateBadge applied />}
         </div>
       </div>
@@ -254,7 +261,7 @@ function EligibilityCard({ item }: { item: EligibilityItem }) {
       {notes.length > 0 && (
         <div className="mt-3 rounded-xl bg-secondary/60 border border-border/60 p-2.5">
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-            <Sparkles className="h-3 w-3" /> {state === "eligible" ? t("sch.whyEligible") : state === "review" ? t("sch.whyShown") : t("sch.whyNot")}
+            <Sparkles className="h-3 w-3" /> {state === "eligible" ? t("sch.whyEligible") : t("sch.whyShown")}
           </p>
           <ul className="mt-1.5 space-y-1">
             {notes.slice(0, 3).map((note, i) => (
@@ -269,15 +276,30 @@ function EligibilityCard({ item }: { item: EligibilityItem }) {
 
       <div className="mt-3">
         <Button asChild size="sm" className="rounded-xl gap-1">
-          <a href={externalApplicationUrl(s)} target="_blank" rel="noopener noreferrer">{t("sch.applyExternal")} <ExternalLink className="h-3.5 w-3.5" /></a>
+          <a
+            href={externalApplicationUrl(s)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {t("sch.applyExternal")} <ExternalLink className="h-3.5 w-3.5" />
+          </a>
         </Button>
       </div>
       <button
-        onClick={() => toggleApplied(s.id)}
-        className="mt-2 w-full text-[11px] font-semibold text-muted-foreground hover:text-foreground inline-flex items-center justify-center gap-1"
+        onClick={(event) => {
+          event.stopPropagation();
+          toggleApplied(s.id);
+        }}
+        className={cn(
+          "mt-2 min-h-9 w-full rounded-xl border px-3 text-[12px] font-semibold inline-flex items-center justify-center gap-1.5 transition-colors",
+          applied
+            ? "border-success/30 bg-success-soft text-success hover:bg-success-soft/80"
+            : "border-primary/20 bg-card text-primary hover:bg-primary-soft"
+        )}
       >
         <Check className="h-3 w-3" /> {applied ? t("match.statusAppliedLong") : t("sch.markApplied")}
       </button>
-    </div>
+    </article>
   );
 }

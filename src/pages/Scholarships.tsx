@@ -694,7 +694,14 @@ function BrowseCard({
   const isStudyAbroad = scholarshipMatchesStudyAbroad(s);
   const hasGeoConnection = highlights.some((point) => normalizeText(point).includes("ort") || normalizeText(point).includes("region") || normalizeText(point).includes("local"));
   return (
-    <Link to={`/stipendier/${s.id}`} className="group block rounded-[28px] border border-border/70 bg-card p-5 shadow-soft transition-all active:scale-[0.99] hover:shadow-card">
+    <Link
+      to={`/stipendier/${s.id}`}
+      className={cn(
+        "group block rounded-[28px] border p-5 shadow-soft transition-all active:scale-[0.99] hover:shadow-card",
+        saved ? "border-emerald-200/80 bg-emerald-50/80" : "border-border/70 bg-card",
+        applied && "border-success/50 bg-success-soft/75"
+      )}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h3 className="font-bold text-[16px] leading-snug tracking-tight group-hover:text-primary transition-colors">{s.name}</h3>

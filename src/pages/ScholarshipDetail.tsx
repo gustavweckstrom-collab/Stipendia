@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { useT, useLang } from "@/lib/i18n";
 import { ApplicationStateBadge, EligibilityStateBadge } from "@/components/StatusBadge";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function ScholarshipDetail() {
   const t = useT();
@@ -91,7 +92,13 @@ export default function ScholarshipDetail() {
       }
     >
       <div className="space-y-4">
-        <div className="rounded-3xl border border-primary/15 bg-primary-soft/55 p-4 shadow-soft">
+        <div
+          className={cn(
+            "rounded-3xl border p-4 shadow-soft transition-colors",
+            saved ? "border-emerald-200/80 bg-emerald-50/80" : "border-primary/15 bg-primary-soft/55",
+            applied && "border-success/50 bg-success-soft/75"
+          )}
+        >
           <p className="text-[11px] text-primary flex items-center gap-1 font-semibold"><Building2 className="h-3 w-3" /> {place}</p>
           <h2 className="font-bold text-lg mt-0.5 leading-tight">{s.name}</h2>
           <div className="mt-3 flex items-center justify-between gap-2">
@@ -205,7 +212,7 @@ export default function ScholarshipDetail() {
             )}
             {elig.blockers.length > 0 && (
               <>
-                <h3 className="font-semibold text-sm flex items-center gap-1.5 mb-2 text-muted-foreground"><AlertCircle className="h-4 w-4" /> {t("sch.whyNot")}</h3>
+                <h3 className="font-semibold text-sm flex items-center gap-1.5 mb-2 text-muted-foreground"><AlertCircle className="h-4 w-4" /> {t("match.statusReview")}</h3>
                 <ul className="list-disc space-y-1 pl-4">
                   {elig.blockers.map((r, i) => <li key={i} className="text-[12px] text-foreground/70">{r}</li>)}
                 </ul>

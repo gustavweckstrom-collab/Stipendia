@@ -19,7 +19,7 @@ export function EligibilityStateBadge({ state, className }: { state: "eligible" 
   const map = {
     eligible: { label: t("sch.eligible"), cls: "bg-success-soft text-success border-success/30" },
     review: { label: t("match.statusReview"), cls: "bg-secondary text-muted-foreground border-border" },
-    "not-eligible": { label: t("sch.notEligible"), cls: "bg-muted text-muted-foreground border-border" },
+    "not-eligible": { label: t("match.statusReview"), cls: "bg-secondary text-muted-foreground border-border" },
   } as const;
   const { label, cls } = map[state];
   return <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border", cls, className)}>{label}</span>;
