@@ -17,8 +17,9 @@ const hasEngagement = (profile: StudentProfile) => {
   const engagement = norm(profile.engagemang);
   return engagement.length > 0 && !engagement.includes("nej") && !engagement.includes("inte relevant");
 };
+const hasPreviousEngagement = (profile: StudentProfile) => norm(profile.engagemang).includes("tidigare aktiv");
 const purposeTags = (profile: StudentProfile) =>
-  SYFTE_OPTIONS.find((option) => option.value === profile.syfte)?.tags ?? [];
+  profile.syfte.flatMap((value) => SYFTE_OPTIONS.find((option) => option.value === value)?.tags ?? []);
 
 export interface EligibilityResult {
   eligible: boolean;
@@ -64,7 +65,7 @@ export function checkEligibility(profile: StudentProfile, s: Scholarship): Eligi
   if (fields.length === 0) {
     review.push(en ? "Study field requirement is unclear" : "Ämneskrav behöver kontrolleras");
   } else if (
-    (profile.amnesomrade && hasOverlap(profile.amnesomrade, fields)) ||
+    (profile.amnesomrade.some((field) => hasOverlap(field, fields))) ||
     (profile.program && hasOverlap(profile.program, fields))
   ) {
     reasons.push(en ? `Your study field appears to fit (${fields.join(", ")})` : `Ditt ämnesområde verkar passa (${fields.join(", ")})`);
@@ -109,7 +110,9 @@ export function checkEligibility(profile: StudentProfile, s: Scholarship): Eligi
   }
 
   if (s.engagementRequired) {
-    if (hasEngagement(profile)) {
+    if (hasPreviousEngagement(profile)) {
+      review.push(en ? "Previous association involvement may be relevant but should be checked" : "Tidigare föreningsengagemang kan vara relevant men behöver kontrolleras");
+    } else if (hasEngagement(profile)) {
       reasons.push(en ? "You have added association involvement or volunteer work" : "Du har angett föreningsengagemang eller ideellt arbete");
     } else {
       blockers.push(en ? "The scholarship requires association involvement or volunteer work" : "Stipendiet kräver föreningsengagemang eller ideellt arbete");

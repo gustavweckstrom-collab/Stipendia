@@ -67,6 +67,7 @@ function ProfileSummary({ profile, onEdit }: { profile: StudentProfile; onEdit: 
   const t = useT();
   const navigate = useNavigate();
   const optionLabel = useOptionLabel();
+  const formatOptions = (values: string[]) => values.map(optionLabel).join(", ");
   const rows: { label: string; value: string }[] = [
     { label: t("profile.firstName"), value: profile.firstName },
     { label: t("profile.lastName"), value: profile.lastName },
@@ -74,9 +75,9 @@ function ProfileSummary({ profile, onEdit }: { profile: StudentProfile; onEdit: 
     { label: t("profile.homeTown"), value: profile.hemort },
     { label: t("profile.university"), value: profile.universitet },
     { label: t("profile.studyCity"), value: profile.studieort },
-    { label: t("profile.field"), value: optionLabel(profile.amnesomrade) },
+    { label: t("profile.field"), value: formatOptions(profile.amnesomrade) },
     { label: t("profile.educationLevel"), value: optionLabel(profile.utbildningsniva) },
-    { label: t("profile.purpose"), value: optionLabel(profile.syfte) },
+    { label: t("profile.purpose"), value: formatOptions(profile.syfte) },
     { label: t("profile.economy"), value: optionLabel(profile.ekonomi) },
   ];
 
@@ -167,12 +168,12 @@ function ProfileWizard({ initial, onCancel, onSaved }: { initial: StudentProfile
     if (step === 1) {
       if (!profile.universitet.trim()) e.universitet = t("v.uniReq");
       if (!profile.program.trim()) e.program = t("v.programReq");
-      if (!profile.amnesomrade.trim()) e.amnesomrade = t("v.fieldReq");
+      if (profile.amnesomrade.length === 0) e.amnesomrade = t("v.fieldReq");
       if (!profile.utbildningsniva.trim()) e.utbildningsniva = t("v.educationReq");
       if (!profile.studieort.trim()) e.studieort = t("v.studyReq");
     }
     if (step === 2) {
-      if (!profile.syfte.trim()) e.syfte = t("v.purposeReq");
+      if (profile.syfte.length === 0) e.syfte = t("v.purposeReq");
       if (!profile.ekonomi.trim()) e.ekonomi = t("v.economyReq");
     }
     setErrors(e);
@@ -266,15 +267,15 @@ function ProfileWizard({ initial, onCancel, onSaved }: { initial: StudentProfile
                 <SearchableCombobox value={profile.program} onChange={(v) => update("program", v)} options={programOptions} placeholder={t("profile.programPh")} maxResults={8} />
                 <p className="mt-1 text-[11px] text-muted-foreground">{t("profile.programHint")}</p>
               </Field>
-              <Field label={`${t("profile.field")} *`} error={errors.amnesomrade}>
-                <Select value={profile.amnesomrade} onValueChange={(v) => update("amnesomrade", v)}>
-                  <SelectTrigger><SelectValue placeholder={t("profile.selectPh")} /></SelectTrigger>
-                  <SelectContent>
-                    {AMNESOMRADE_OPTIONS.map((o) => <SelectItem key={o} value={o}>{optionLabel(o)}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+              <Field label={`${t("profile.field")} *`} error={errors.amnesomrade} hint={t("profile.fieldHint")}>
+                <MultiSelectChips
+                  options={AMNESOMRADE_OPTIONS as unknown as string[]}
+                  value={profile.amnesomrade}
+                  onChange={(value) => update("amnesomrade", value)}
+                  optionLabel={optionLabel}
+                />
               </Field>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label={`${t("profile.educationLevel")} *`} error={errors.utbildningsniva}>
                     <Select value={profile.utbildningsniva} onValueChange={(v) => update("utbildningsniva", v)}>
                       <SelectTrigger><SelectValue placeholder={t("profile.selectPh")} /></SelectTrigger>
@@ -315,12 +316,12 @@ function ProfileWizard({ initial, onCancel, onSaved }: { initial: StudentProfile
                 </Select>
               </Field>
               <Field label={`${t("profile.purpose")} *`} error={errors.syfte} hint={t("profile.purposeHint")}>
-                <Select value={profile.syfte} onValueChange={(v) => update("syfte", v)}>
-                  <SelectTrigger><SelectValue placeholder={t("profile.selectOptionPh")} /></SelectTrigger>
-                  <SelectContent>
-                    {SYFTE_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{optionLabel(o.value)}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <MultiSelectChips
+                  options={SYFTE_OPTIONS.map((o) => o.value)}
+                  value={profile.syfte}
+                  onChange={(value) => update("syfte", value)}
+                  optionLabel={optionLabel}
+                />
               </Field>
               <Field label={`${t("profile.economy")} *`} error={errors.ekonomi}>
                 <Select value={profile.ekonomi} onValueChange={(v) => update("ekonomi", v)}>
@@ -358,6 +359,42 @@ function Field({ label, hint, error, children }: { label: string; hint?: string;
       {children}
       {hint && !error && <p className="text-[11px] text-muted-foreground">{hint}</p>}
       {error && <p className="text-[11px] text-destructive">{error}</p>}
+    </div>
+  );
+}
+
+function MultiSelectChips({
+  options,
+  value,
+  onChange,
+  optionLabel,
+}: {
+  options: string[];
+  value: string[];
+  onChange: (value: string[]) => void;
+  optionLabel: (value: string) => string;
+}) {
+  const toggle = (option: string) => {
+    onChange(value.includes(option) ? value.filter((item) => item !== option) : [...value, option]);
+  };
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((option) => {
+        const selected = value.includes(option);
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => toggle(option)}
+            className={`rounded-full border px-3 py-2 text-left text-xs font-semibold transition-colors ${
+              selected ? "border-primary bg-primary-soft text-primary" : "border-border bg-card text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {optionLabel(option)}
+          </button>
+        );
+      })}
     </div>
   );
 }

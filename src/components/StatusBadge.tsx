@@ -30,7 +30,7 @@ export function ApplicationStateBadge({ applied, className }: { applied: boolean
   return (
     <span className={cn(
       "text-[10px] font-semibold px-2 py-0.5 rounded-full border",
-      applied ? "bg-primary-soft text-primary border-primary/20" : "bg-secondary text-muted-foreground border-border",
+      applied ? "bg-success-soft text-success border-success/30" : "bg-secondary text-muted-foreground border-border",
       className
     )}>
       {applied ? t("match.statusApplied") : t("match.statusNotApplied")}

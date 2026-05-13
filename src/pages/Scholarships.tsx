@@ -40,6 +40,7 @@ import { StipendiaIllustration } from "@/components/visual/StipendiaIllustration
 const RESULT_STEP = 50;
 const FILTER_EDUCATION_LEVEL_OPTIONS = EDUCATION_LEVEL_OPTIONS;
 const TYPE_PARAM = "typ";
+type BrowseView = "all" | "saved" | "applied";
 
 type ScholarshipFilters = {
   query: string;
@@ -73,7 +74,7 @@ function buildScholarshipParams({
   types,
   eligibleOnly,
 }: {
-  view: "all" | "saved";
+  view: BrowseView;
   query: string;
   field: string;
   uni: string;
@@ -87,6 +88,7 @@ function buildScholarshipParams({
 }) {
   const params = new URLSearchParams();
   if (view === "saved") params.set("sparade", "1");
+  if (view === "applied") params.set("sokta", "1");
   if (query.trim()) params.set("q", query.trim());
   if (field) params.set("falt", field);
   if (uni.trim()) params.set("universitet", uni.trim());
@@ -102,6 +104,12 @@ function buildScholarshipParams({
 
 function sameScholarshipTypes(a: ScholarshipType[], b: ScholarshipType[]) {
   return a.length === b.length && a.every((type) => b.includes(type));
+}
+
+function parseBrowseView(params: URLSearchParams): BrowseView {
+  if (params.get("sparade") === "1") return "saved";
+  if (params.get("sokta") === "1") return "applied";
+  return "all";
 }
 
 function scholarshipHasText(s: Scholarship, value: string) {
@@ -165,7 +173,7 @@ export default function Scholarships() {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchParamString = searchParams.toString();
   const syncingFromUrl = useRef(false);
-  const [view, setView] = useState<"all" | "saved">(() => searchParams.get("sparade") === "1" ? "saved" : "all");
+  const [view, setView] = useState<BrowseView>(() => parseBrowseView(searchParams));
   const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
   const [field, setField] = useState<string>(() => searchParams.get("falt") ?? "");
   const [uni, setUni] = useState<string>(() => searchParams.get("universitet") ?? "");
@@ -181,7 +189,9 @@ export default function Scholarships() {
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [appliedIds, setAppliedIds] = useState<string[]>([]);
   const [savedItems, setSavedItems] = useState<Scholarship[]>([]);
+  const [appliedItems, setAppliedItems] = useState<Scholarship[]>([]);
   const [savedLoading, setSavedLoading] = useState(false);
+  const [appliedLoading, setAppliedLoading] = useState(false);
   const [index, setIndex] = useState<ScholarshipIndex | null>(null);
   const [items, setItems] = useState<Scholarship[]>([]);
   const [loadedChunkFiles, setLoadedChunkFiles] = useState<string[]>([]);
@@ -205,7 +215,7 @@ export default function Scholarships() {
     setEducationLevel(searchParams.get("niva") ?? "");
     setTravelOnly(searchParams.get("resa") === "1");
     setEligibleOnly(searchParams.get("behorig") === "1");
-    setView(searchParams.get("sparade") === "1" ? "saved" : "all");
+    setView(parseBrowseView(searchParams));
     const validTypes = parseScholarshipTypes(searchParams);
     setTypes((current) => sameScholarshipTypes(current, validTypes) ? current : validTypes);
   }, [searchParamString]);
@@ -235,7 +245,7 @@ export default function Scholarships() {
     }
   }, [birthPlace, educationLevel, eligibleOnly, field, loc, query, residencePlace, searchParamString, setSearchParams, travelOnly, types, uni, view]);
 
-  const setBrowseView = useCallback((next: "all" | "saved") => {
+  const setBrowseView = useCallback((next: BrowseView) => {
     setView(next);
   }, []);
 
@@ -280,6 +290,19 @@ export default function Scholarships() {
     return () => { cancelled = true; };
   }, [savedIds]);
 
+  useEffect(() => {
+    let cancelled = false;
+    setAppliedLoading(true);
+    loadScholarshipsByIds(appliedIds)
+      .then((items) => {
+        if (!cancelled) setAppliedItems(items);
+      })
+      .finally(() => {
+        if (!cancelled) setAppliedLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [appliedIds]);
+
   useEffect(() => setResultPage(0), [view, query, field, uni, birthPlace, residencePlace, loc, educationLevel, travelOnly, types, eligibleOnly]);
 
   const loadMore = useCallback(async (batchSize = 1) => {
@@ -303,7 +326,7 @@ export default function Scholarships() {
     }
   }, [field, index, loadedChunkFiles, loadingMore, nextChunk]);
 
-  const sourceItems = view === "saved" ? savedItems : items;
+  const sourceItems = view === "saved" ? savedItems : view === "applied" ? appliedItems : items;
   const fieldOptions = useMemo(() => {
     const fromIndex = index?.fields?.filter(Boolean) ?? [];
     return fromIndex.length > 0 ? fromIndex : [...AMNESOMRADE_OPTIONS];
@@ -410,12 +433,14 @@ export default function Scholarships() {
   const resetSearchAndFilters = () => { setQuery(""); resetFilters(); };
 
   const filtered = datasetFilterActive ? datasetMatches : localFiltered;
-  const total = view === "saved" ? savedItems.length : index?.total ?? items.length;
+  const total = view === "saved" ? savedItems.length : view === "applied" ? appliedItems.length : index?.total ?? items.length;
   const hasFilter = hasSearchOrFilter;
   const resultStart = resultPage * RESULT_STEP;
   const visibleItems = datasetFilterActive ? filtered : filtered.slice(resultStart, resultStart + RESULT_STEP);
   const totalForRange = view === "saved"
     ? (hasSearchOrFilter ? localFiltered.length : savedItems.length)
+    : view === "applied"
+      ? (hasSearchOrFilter ? localFiltered.length : appliedItems.length)
     : datasetFilterActive
       ? datasetMatchTotal
       : total;
@@ -442,13 +467,14 @@ export default function Scholarships() {
     }
     setResultPage((page) => page + 1);
   };
-  const isLoadingView = loading || (view === "saved" && savedLoading) || (datasetFilterActive && datasetScanning && filtered.length === 0);
+  const isLoadingView = loading || (view === "saved" && savedLoading) || (view === "applied" && appliedLoading) || (datasetFilterActive && datasetScanning && filtered.length === 0);
   const savedEmpty = view === "saved" && savedIds.length === 0;
+  const appliedEmpty = view === "applied" && appliedIds.length === 0;
 
   return (
     <AppScreen title={t("sch.title")} subtitle={t("sch.subtitle")}>
       <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-1 rounded-2xl border border-border/70 bg-secondary/70 p-1">
+        <div className="grid grid-cols-3 gap-1 rounded-2xl border border-border/70 bg-secondary/70 p-1">
           <button
             onClick={() => setBrowseView("all")}
             className={cn(
@@ -466,6 +492,15 @@ export default function Scholarships() {
             )}
           >
             {t("sch.tabSaved", { n: savedIds.length })}
+          </button>
+          <button
+            onClick={() => setBrowseView("applied")}
+            className={cn(
+              "h-10 rounded-xl text-sm font-semibold transition-all",
+              view === "applied" ? "bg-card text-foreground shadow-soft" : "text-muted-foreground"
+            )}
+          >
+            {t("sch.tabApplied", { n: appliedIds.length })}
           </button>
         </div>
 
@@ -549,12 +584,6 @@ export default function Scholarships() {
           </Sheet>
         </div>
         <p className="px-1 text-[11px] text-muted-foreground">{countLabel}</p>
-        {view === "all" && hasFilter && (datasetFilterActive || hasMoreChunks) && (
-          <p className="rounded-2xl border border-border/60 bg-secondary/50 px-3 py-2 text-[12px] leading-relaxed text-muted-foreground">
-            {t("sch.stepwiseHint")}
-          </p>
-        )}
-
         {hasSearchOrFilter && (
           <div className="flex items-center gap-1.5 flex-wrap">
             {query && <ActiveChip label={`${t("sch.searchLabel")}: ${query}`} onRemove={() => setQuery("")} />}
@@ -582,6 +611,16 @@ export default function Scholarships() {
             </div>
             <h2 className="text-base font-semibold">{t("saved.emptyTitle")}</h2>
             <p className="mx-auto mt-1 max-w-[18rem] text-sm text-muted-foreground leading-relaxed">{t("saved.empty")}</p>
+            <Button onClick={() => setBrowseView("all")} className="mt-4 rounded-xl h-11">{t("sch.tabAll")}</Button>
+          </div>
+        ) : appliedEmpty ? (
+          <div className="rounded-[30px] border border-border/70 bg-card p-4 text-center shadow-soft">
+            <StipendiaIllustration variant="empty" className="mb-4" />
+            <div className="mx-auto h-12 w-12 rounded-2xl bg-success-soft text-success flex items-center justify-center mb-3">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
+            <h2 className="text-base font-semibold">{t("sch.appliedEmptyTitle")}</h2>
+            <p className="mx-auto mt-1 max-w-[18rem] text-sm text-muted-foreground leading-relaxed">{t("sch.appliedEmpty")}</p>
             <Button onClick={() => setBrowseView("all")} className="mt-4 rounded-xl h-11">{t("sch.tabAll")}</Button>
           </div>
         ) : filtered.length === 0 ? (

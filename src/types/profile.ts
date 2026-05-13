@@ -3,7 +3,7 @@ export interface StudentProfile {
   lastName: string;
   universitet: string;
   program: string;
-  amnesomrade: string;
+  amnesomrade: string[];
   termin?: string;
   utbildningsniva: string;
   studieort: string;
@@ -14,7 +14,7 @@ export interface StudentProfile {
   omDig?: string;
   engagemang: string;
   intressen: string;
-  syfte: string;
+  syfte: string[];
   syfteAnnan?: string;
 }
 
@@ -89,7 +89,7 @@ export const EMPTY_PROFILE: StudentProfile = {
   lastName: "",
   universitet: "",
   program: "",
-  amnesomrade: "",
+  amnesomrade: [],
   termin: "",
   utbildningsniva: "",
   studieort: "",
@@ -99,7 +99,7 @@ export const EMPTY_PROFILE: StudentProfile = {
   omDig: "",
   engagemang: "",
   intressen: "",
-  syfte: "",
+  syfte: [],
   syfteAnnan: "",
 };
 
@@ -114,6 +114,7 @@ export function profileCompleteness(p: StudentProfile | null): number {
   const total = PROFILE_REQUIRED_FIELDS.length;
   const filled = PROFILE_REQUIRED_FIELDS.filter((k) => {
     const v = (p as any)[k];
+    if (Array.isArray(v)) return v.length > 0;
     return typeof v === "string" && v.trim().length > 0;
   }).length;
   return Math.round((filled / total) * 100);
@@ -170,7 +171,7 @@ export const AMNESOMRADE_OPTIONS = [
   "Konst / Kultur / Design",
   "Pedagogik / Lärarutbildning",
   "Lantbruk / Miljö",
-  "Annat",
+  "Annat / osäker",
 ] as const;
 
 export const EDUCATION_LEVEL_OPTIONS = [
@@ -180,18 +181,18 @@ export const EDUCATION_LEVEL_OPTIONS = [
 
 export const ENGAGEMENT_OPTIONS = [
   "Ja, jag har föreningsengagemang eller ideellt arbete",
+  "Tidigare aktiv i föreningsliv",
   "Nej / inte relevant",
 ] as const;
 
 export const SYFTE_OPTIONS = [
-  { value: "Extra ekonomiskt stöd under studierna", tags: ["ekonomiskt stöd", "levnadskostnader", "fritt"] },
-  { value: "Utlandsstudier eller utbyte", tags: ["utbytesstudier", "utlandsstudier", "resor"] },
+  { value: "Studiekostnader", tags: ["kursavgift", "kurslitteratur", "utbildningskostnader", "studiekostnader"] },
+  { value: "Resa", tags: ["resor", "resa", "studieresa", "fältstudier"] },
+  { value: "Utlandsstudier", tags: ["utbytesstudier", "utlandsstudier", "studier utomlands", "resor"] },
   { value: "Examensarbete", tags: ["examensarbete"] },
   { value: "Praktik", tags: ["praktik"] },
-  { value: "Forskningsprojekt", tags: ["forskning", "projekt"] },
-  { value: "Studieresa", tags: ["studieresa", "resor", "konferens"] },
-  { value: "Kursavgift eller utbildningskostnader", tags: ["kursavgift", "kurslitteratur"] },
-  { value: "Boende eller levnadsomkostnader", tags: ["levnadskostnader", "hyra"] },
+  { value: "Material/litteratur", tags: ["material", "kurslitteratur", "litteratur", "instrument"] },
+  { value: "Ekonomiskt stöd", tags: ["ekonomiskt stöd", "levnadskostnader", "fritt", "hyra"] },
   { value: "Annat", tags: ["fritt"] },
 ] as const;
 

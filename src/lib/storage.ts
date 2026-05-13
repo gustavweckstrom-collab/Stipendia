@@ -10,11 +10,40 @@ const KEYS = {
 
 const LEGACY_KEYS = ["stipendia.drafts"];
 
+function uniqueStrings(values: string[]): string[] {
+  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+}
+
+function toStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) return uniqueStrings(value.filter((item): item is string => typeof item === "string"));
+  if (typeof value === "string" && value.trim()) return [value.trim()];
+  return [];
+}
+
+function normalizeFieldValues(value: unknown): string[] {
+  return uniqueStrings(toStringArray(value).map((item) => item === "Annat" ? "Annat / osäker" : item));
+}
+
+function normalizePurposeValues(value: unknown): string[] {
+  const legacyMap: Record<string, string[]> = {
+    "Extra ekonomiskt stöd under studierna": ["Ekonomiskt stöd"],
+    "Utlandsstudier eller utbyte": ["Utlandsstudier"],
+    "Studieresa": ["Resa"],
+    "Kursavgift eller utbildningskostnader": ["Studiekostnader", "Material/litteratur"],
+    "Boende eller levnadsomkostnader": ["Ekonomiskt stöd"],
+    "Forskningsprojekt": ["Annat"],
+  };
+
+  return uniqueStrings(toStringArray(value).flatMap((item) => legacyMap[item] ?? [item]));
+}
+
 function stripLegacyProfileFields(p: any): StudentProfile {
   delete p.bakgrund;
   delete p.dokument;
   delete p.uploads;
   delete p.ekonomiKommentar;
+  p.amnesomrade = normalizeFieldValues(p.amnesomrade);
+  p.syfte = normalizePurposeValues(p.syfte);
   return p as StudentProfile;
 }
 

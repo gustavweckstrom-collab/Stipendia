@@ -11,6 +11,7 @@ import { StudentProfile } from "@/types/profile";
 import { useT } from "@/lib/i18n";
 import { ApplicationStateBadge, EligibilityStateBadge } from "@/components/StatusBadge";
 import { StipendiaIllustration } from "@/components/visual/StipendiaIllustration";
+import { cn } from "@/lib/utils";
 
 const RESULT_STEP = 50;
 
@@ -32,6 +33,7 @@ export default function Matches() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [resultPage, setResultPage] = useState(0);
+  const [selectedState, setSelectedState] = useState<EligibilityState>("eligible");
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -80,23 +82,43 @@ export default function Matches() {
     });
   }, [profile, items]);
 
-  useEffect(() => setResultPage(0), [profile]);
+  useEffect(() => setResultPage(0), [profile, selectedState]);
 
-  const totalEligible = eligibilityItems.filter((i) => i.state === "eligible").length;
+  const groupedItems = useMemo(() => ({
+    eligible: eligibilityItems.filter((i) => i.state === "eligible"),
+    review: eligibilityItems.filter((i) => i.state === "review"),
+    "not-eligible": eligibilityItems.filter((i) => i.state === "not-eligible"),
+  }), [eligibilityItems]);
+  const totalEligible = groupedItems.eligible.length;
+  const totalReview = groupedItems.review.length;
+  const totalNotEligible = groupedItems["not-eligible"].length;
+  const selectedItems = groupedItems[selectedState];
   const resultStart = resultPage * RESULT_STEP;
-  const visibleEligibilityItems = eligibilityItems.slice(resultStart, resultStart + RESULT_STEP);
-  const eligible = visibleEligibilityItems.filter((i) => i.state === "eligible");
-  const review = visibleEligibilityItems.filter((i) => i.state === "review");
-  const notEligible = visibleEligibilityItems.filter((i) => i.state === "not-eligible");
+  const visibleEligibilityItems = selectedItems.slice(resultStart, resultStart + RESULT_STEP);
   const hasMoreChunks = Boolean(index && nextChunk < index.chunks.length);
-  const hasNextBatch = resultStart + RESULT_STEP < eligibilityItems.length || hasMoreChunks;
+  const hasNextPage = resultStart + RESULT_STEP < selectedItems.length;
+  const hasNextBatch = hasNextPage || hasMoreChunks;
   const goToNextBatch = async () => {
-    const nextStart = (resultPage + 1) * RESULT_STEP;
-    if (nextStart >= eligibilityItems.length && hasMoreChunks) await loadMore();
-    setResultPage((page) => page + 1);
+    if (hasNextPage) setResultPage((page) => page + 1);
+    else if (hasMoreChunks) await loadMore();
   };
-  const rangeFrom = eligibilityItems.length === 0 ? 0 : resultStart + 1;
-  const rangeTo = Math.min(resultStart + visibleEligibilityItems.length, eligibilityItems.length);
+  const rangeFrom = selectedItems.length === 0 ? 0 : resultStart + 1;
+  const rangeTo = Math.min(resultStart + visibleEligibilityItems.length, selectedItems.length);
+  const selectedLabel = selectedState === "eligible"
+    ? t("match.labelEligible")
+    : selectedState === "review"
+      ? t("match.labelReview")
+      : t("match.labelNotEligible");
+  const selectedTitle = selectedState === "eligible"
+    ? t("match.eligibleTitle")
+    : selectedState === "review"
+      ? t("match.reviewTitle")
+      : t("match.notEligibleTitle");
+  const selectedSubtitle = selectedState === "review"
+    ? t("match.reviewSub")
+    : selectedState === "not-eligible"
+      ? t("match.notEligibleSub")
+      : undefined;
 
   if (!profile) {
     return (
@@ -117,14 +139,28 @@ export default function Matches() {
   }
 
   return (
-    <AppScreen title={t("match.title")} subtitle={t("match.subtitle", { n: totalEligible })}>
+    <AppScreen title={t("match.title")} subtitle={t("match.subtitle", { eligible: totalEligible, review: totalReview })}>
       <div className="space-y-5">
         {loading && <div className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">{t("sch.loading")}</div>}
         {!loading && eligibilityItems.length > 0 && (
-          <p className="px-1 text-[11px] text-muted-foreground">{t("sch.resultRange", { from: rangeFrom, to: rangeTo, t: eligibilityItems.length })}</p>
+          <>
+            <div className="rounded-2xl border border-border/60 bg-secondary/45 p-3 text-[12px] text-muted-foreground">
+              {t("match.loadedCounts", { eligible: totalEligible, review: totalReview, notEligible: totalNotEligible })}
+            </div>
+            <div className="grid grid-cols-3 gap-1 rounded-2xl border border-border/70 bg-secondary/70 p-1">
+              <StatusTab active={selectedState === "eligible"} onClick={() => setSelectedState("eligible")} label={t("match.eligibleTitle")} count={totalEligible} />
+              <StatusTab active={selectedState === "review"} onClick={() => setSelectedState("review")} label={t("match.reviewTitle")} count={totalReview} />
+              <StatusTab active={selectedState === "not-eligible"} onClick={() => setSelectedState("not-eligible")} label={t("match.notEligibleTitle")} count={totalNotEligible} />
+            </div>
+            <p className="px-1 text-[11px] text-muted-foreground">
+              {selectedItems.length > 0
+                ? t("match.resultRange", { from: rangeFrom, to: rangeTo, total: selectedItems.length, label: selectedLabel })
+                : t("match.resultRange", { from: 0, to: 0, total: 0, label: selectedLabel })}
+            </p>
+          </>
         )}
 
-        {!loading && eligible.length === 0 && (
+        {!loading && selectedItems.length === 0 && (
           <div className="rounded-[30px] border border-border/70 bg-card p-4 text-center shadow-soft">
             <StipendiaIllustration variant="empty" className="mb-4" />
             <p className="text-sm text-muted-foreground leading-relaxed">{t("match.empty")}</p>
@@ -132,9 +168,12 @@ export default function Matches() {
           </div>
         )}
 
-        <EligibilitySection title={t("match.eligibleTitle")} icon={CheckCircle2} items={eligible} />
-        <EligibilitySection title={t("match.reviewTitle")} subtitle={t("match.reviewSub")} icon={CircleHelp} items={review} />
-        <EligibilitySection title={t("match.notEligibleTitle")} subtitle={t("match.notEligibleSub")} icon={AlertCircle} items={notEligible} />
+        <EligibilitySection
+          title={`${selectedTitle} (${selectedItems.length})`}
+          subtitle={selectedSubtitle}
+          icon={selectedState === "eligible" ? CheckCircle2 : selectedState === "review" ? CircleHelp : AlertCircle}
+          items={visibleEligibilityItems}
+        />
 
         <div className="grid grid-cols-2 gap-2">
           {resultPage > 0 && (
@@ -144,12 +183,27 @@ export default function Matches() {
           )}
           {hasNextBatch && (
             <Button variant="outline" className={resultPage === 0 ? "col-span-2 rounded-xl" : "rounded-xl"} onClick={goToNextBatch} disabled={loadingMore}>
-              {loadingMore ? t("sch.loading") : t("sch.nextBatch")}
+              {loadingMore ? t("sch.loading") : hasNextPage ? t("sch.nextBatch") : t("match.loadMoreData")}
             </Button>
           )}
         </div>
       </div>
     </AppScreen>
+  );
+}
+
+function StatusTab({ active, onClick, label, count }: { active: boolean; onClick: () => void; label: string; count: number }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "min-h-11 rounded-xl px-2 py-1 text-[11px] font-semibold leading-tight transition-all",
+        active ? "bg-card text-foreground shadow-soft" : "text-muted-foreground"
+      )}
+    >
+      <span className="block">{label}</span>
+      <span className="block text-[10px] opacity-80">{count}</span>
+    </button>
   );
 }
 
@@ -175,7 +229,10 @@ function EligibilityCard({ item }: { item: EligibilityItem }) {
   const notes = state === "eligible" ? reasons : state === "review" ? [...review, ...reasons].slice(0, 3) : blockers;
 
   return (
-    <div className="p-4 bg-card rounded-2xl border border-border/70 shadow-soft transition-transform active:scale-[0.99]">
+    <div className={cn(
+      "p-4 bg-card rounded-2xl border border-border/70 shadow-soft transition-transform active:scale-[0.99]",
+      applied && "border-success/35 bg-success-soft/20"
+    )}>
       <div className="flex items-start justify-between gap-3">
         <Link to={`/stipendier/${s.id}`} className="block min-w-0">
           <h3 className="font-semibold text-[15px] leading-snug hover:text-primary transition-colors">{s.name}</h3>
@@ -219,7 +276,7 @@ function EligibilityCard({ item }: { item: EligibilityItem }) {
         onClick={() => toggleApplied(s.id)}
         className="mt-2 w-full text-[11px] font-semibold text-muted-foreground hover:text-foreground inline-flex items-center justify-center gap-1"
       >
-        <Check className="h-3 w-3" /> {applied ? t("match.statusApplied") : t("sch.markApplied")}
+        <Check className="h-3 w-3" /> {applied ? t("match.statusAppliedLong") : t("sch.markApplied")}
       </button>
     </div>
   );
