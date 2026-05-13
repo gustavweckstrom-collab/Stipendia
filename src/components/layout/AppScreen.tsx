@@ -17,8 +17,8 @@ export default function AppScreen({ title, subtitle, back, right, children, clas
   return (
     <div className={cn("min-h-full", className)}>
       {(title || back || right) && (
-        <div className="sticky top-0 z-20 bg-app/95 backdrop-blur-md border-b border-border/60">
-          <div className="flex items-center gap-2 px-4 min-h-16 py-2">
+        <div className="sticky top-0 z-20 border-b border-border/60 bg-app/95 backdrop-blur-md">
+          <div className="flex min-h-[5rem] items-center gap-2 px-4 pt-4 pb-3">
             {back && (
               <button
                 onClick={() => navigate(-1)}
@@ -29,8 +29,8 @@ export default function AppScreen({ title, subtitle, back, right, children, clas
               </button>
             )}
             <div className="flex-1 min-w-0">
-              {title && <h1 className="text-[22px] font-bold leading-tight tracking-tight line-clamp-2">{title}</h1>}
-              {subtitle && <p className="mt-0.5 text-[12px] text-muted-foreground leading-snug line-clamp-2">{subtitle}</p>}
+              {title && <h1 className="py-0.5 text-[28px] font-extrabold leading-[1.12] tracking-normal text-foreground line-clamp-2">{title}</h1>}
+              {subtitle && <p className="mt-0.5 text-[13px] font-medium text-muted-foreground leading-snug line-clamp-2">{subtitle}</p>}
             </div>
             {right}
           </div>

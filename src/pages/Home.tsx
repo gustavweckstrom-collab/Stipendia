@@ -29,13 +29,13 @@ export default function Home() {
   const hasProfile = Boolean(profile);
 
   return (
-    <div className="px-4 pt-6 pb-2 space-y-6">
-      <section className="rounded-[30px] border border-border/70 bg-card p-4 shadow-lift">
+    <div className="px-3 pt-4 pb-2 space-y-5">
+      <section className="rounded-[26px] border border-border/70 bg-card p-4 shadow-lift">
         <div className="grid min-w-0 gap-4">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">{t("home.kicker")}</p>
-            <h1 className="mt-2 max-w-full break-words text-[28px] font-extrabold leading-[1.06]">{t("home.title")}</h1>
-            <p className="text-[13px] text-muted-foreground mt-3 leading-relaxed">{t("home.intro")}</p>
+            <h1 className="mt-2 max-w-full break-words py-0.5 text-[31px] font-extrabold leading-[1.1] tracking-normal">{t("home.title")}</h1>
+            <p className="text-[14px] text-muted-foreground mt-3 leading-relaxed">{t("home.intro")}</p>
           </div>
           <ExploreRail />
           <div className={hasProfile ? "grid grid-cols-2 gap-2" : "grid grid-cols-1 gap-2"}>
@@ -77,7 +77,7 @@ export default function Home() {
       )}
 
       <Section title={t("home.howItWorks")}>
-        <ol className="rounded-3xl border border-border/60 bg-card px-4 py-1 shadow-none">
+        <ol className="rounded-[26px] border border-border/60 bg-card px-4 py-1 shadow-none">
           <Step n={1} icon={UserPlus} title={t("home.step1.title")} desc={t("home.step1.desc")} />
           <Step n={2} icon={Search} title={t("home.step2.title")} desc={t("home.step2.desc")} />
           <Step n={3} icon={ShieldCheck} title={t("home.step3.title")} desc={t("home.step3.desc")} />
@@ -85,7 +85,7 @@ export default function Home() {
       </Section>
 
       <div className="grid grid-cols-1 gap-2">
-        <Link to="/stipendier?sparade=1" className="p-4 bg-card rounded-2xl border border-border/60 shadow-soft transition-transform active:scale-[0.99]">
+        <Link to="/stipendier?sparade=1" className="p-4 bg-card rounded-[26px] border border-border/60 shadow-soft transition-transform active:scale-[0.99]">
           <span className="h-10 w-10 rounded-xl bg-accent-soft text-accent-foreground flex items-center justify-center"><Bookmark className="h-5 w-5" /></span>
           <p className="font-semibold text-sm mt-2">{t("home.savedTitle")}</p>
           <p className="text-[11px] text-muted-foreground">{t("home.savedSub", { n: savedCount })}</p>
@@ -93,7 +93,7 @@ export default function Home() {
       </div>
 
       <Section title={t("home.why")}>
-        <div className="rounded-3xl border border-border/50 bg-secondary/30 px-4 py-4 shadow-none">
+        <div className="rounded-[26px] border border-border/50 bg-secondary/30 px-4 py-4 shadow-none">
           <Why icon={Wallet} title={t("home.why1.t")} desc={t("home.why1.d")} />
           <Why icon={Plane} title={t("home.why2.t")} desc={t("home.why2.d")} />
           <Why icon={BookOpen} title={t("home.why3.t")} desc={t("home.why3.d")} />

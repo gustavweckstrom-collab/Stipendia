@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { useTagTranslator } from "@/lib/tagTranslator";
-import { Link, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Scholarship, ScholarshipIndex } from "@/data/scholarships";
 import {
   loadFirstScholarshipChunk,
@@ -32,9 +32,10 @@ import {
 import { SearchableCombobox } from "@/components/ui/SearchableCombobox";
 import { AMNESOMRADE_OPTIONS, EDUCATION_LEVEL_OPTIONS, HEMORT_SUGGESTIONS, SCHOLARSHIP_TYPES, ScholarshipType, STUDIEORT_OPTIONS, UNIVERSITET_OPTIONS } from "@/types/profile";
 import { checkEligibility, eligibilityState, scholarshipTypes } from "@/lib/eligibility";
-import { loadAppliedIds, loadProfile, loadSavedIds } from "@/lib/storage";
+import { loadAppliedIds, loadPersonalDeadlines, loadProfile, loadSavedIds, PersonalDeadline } from "@/lib/storage";
 import { ApplicationStateBadge, EligibilityStateBadge } from "@/components/StatusBadge";
 import { StipendiaIllustration } from "@/components/visual/StipendiaIllustration";
+import { PersonalDeadlineQuickEdit } from "@/components/PersonalDeadline";
 
 // Keep list rendering capped to one mobile-friendly batch at a time.
 const RESULT_STEP = 50;
@@ -188,6 +189,7 @@ export default function Scholarships() {
   const [profile, setProfile] = useState(loadProfile());
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [appliedIds, setAppliedIds] = useState<string[]>([]);
+  const [deadlines, setDeadlines] = useState<Record<string, PersonalDeadline>>({});
   const [savedItems, setSavedItems] = useState<Scholarship[]>([]);
   const [appliedItems, setAppliedItems] = useState<Scholarship[]>([]);
   const [savedLoading, setSavedLoading] = useState(false);
@@ -254,6 +256,7 @@ export default function Scholarships() {
       setProfile(loadProfile());
       setSavedIds(loadSavedIds());
       setAppliedIds(loadAppliedIds());
+      setDeadlines(loadPersonalDeadlines());
     };
     r();
     window.addEventListener("stipendia:update", r);
@@ -645,6 +648,13 @@ export default function Scholarships() {
                   profile={profile}
                   saved={savedIds.includes(s.id)}
                   applied={appliedIds.includes(s.id)}
+                  deadline={deadlines[s.id] ?? null}
+                  onDeadlineChange={(deadline) => setDeadlines((current) => {
+                    const next = { ...current };
+                    if (deadline) next[s.id] = deadline;
+                    else delete next[s.id];
+                    return next;
+                  })}
                   relationSearchValues={[query, uni, birthPlace, residencePlace, loc]}
                 />
               ))}
@@ -673,15 +683,20 @@ function BrowseCard({
   profile,
   saved,
   applied,
+  deadline,
+  onDeadlineChange,
   relationSearchValues,
 }: {
   scholarship: Scholarship;
   profile: ReturnType<typeof loadProfile>;
   saved: boolean;
   applied: boolean;
+  deadline: PersonalDeadline | null;
+  onDeadlineChange: (deadline: PersonalDeadline | null) => void;
   relationSearchValues: string[];
 }) {
   const t = useT();
+  const navigate = useNavigate();
   const translateTag = useTagTranslator();
   const eligibilityResult = profile ? checkEligibility(profile, s) : null;
   const state = eligibilityResult ? eligibilityState(eligibilityResult) : null;
@@ -693,11 +708,21 @@ function BrowseCard({
   const isTravel = scholarshipMatchesTravel(s);
   const isStudyAbroad = scholarshipMatchesStudyAbroad(s);
   const hasGeoConnection = highlights.some((point) => normalizeText(point).includes("ort") || normalizeText(point).includes("region") || normalizeText(point).includes("local"));
+  const openDetail = () => navigate(`/stipendier/${s.id}`);
+
   return (
-    <Link
-      to={`/stipendier/${s.id}`}
+    <article
+      role="link"
+      tabIndex={0}
+      onClick={openDetail}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openDetail();
+        }
+      }}
       className={cn(
-        "group block rounded-[28px] border p-5 shadow-soft transition-all active:scale-[0.99] hover:shadow-card",
+        "group cursor-pointer rounded-[28px] border p-5 shadow-soft transition-all active:scale-[0.99] hover:shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35",
         saved ? "border-emerald-200/80 bg-emerald-50/80" : "border-border/70 bg-card",
         applied && "border-success/50 bg-success-soft/75"
       )}
@@ -728,6 +753,14 @@ function BrowseCard({
         {applied && <ApplicationStateBadge applied />}
       </div>
 
+      {saved && (
+        <PersonalDeadlineQuickEdit
+          scholarshipId={s.id}
+          value={deadline}
+          onChange={onDeadlineChange}
+        />
+      )}
+
       <div className="mt-4 rounded-2xl border border-border/60 bg-secondary/45 px-3.5 py-3">
         <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{t("sch.cardEligibility")}</p>
         <ul className="space-y-1">
@@ -746,7 +779,7 @@ function BrowseCard({
           {t("sch.details")} <ChevronRight className="h-3.5 w-3.5" />
         </span>
       </div>
-    </Link>
+    </article>
   );
 }
 

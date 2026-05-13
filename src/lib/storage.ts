@@ -6,6 +6,7 @@ const KEYS = {
   applied: "stipendia.applied",
   notifs: "stipendia.notifs",
   lang: "stipendia.lang",
+  deadlines: "stipendia.deadlines",
 };
 
 const LEGACY_KEYS = ["stipendia.drafts"];
@@ -113,6 +114,53 @@ export function toggleApplied(id: string): string[] {
   const cur = loadAppliedIds();
   const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
   localStorage.setItem(KEYS.applied, JSON.stringify(next));
+  window.dispatchEvent(new Event("stipendia:update"));
+  return next;
+}
+
+export type PersonalDeadline = {
+  date: string;
+  reminderDays: 1 | 3 | 7 | null;
+};
+
+function isPersonalDeadline(value: unknown): value is PersonalDeadline {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Partial<PersonalDeadline>;
+  return typeof item.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(item.date);
+}
+
+export function loadPersonalDeadlines(): Record<string, PersonalDeadline> {
+  try {
+    const raw = localStorage.getItem(KEYS.deadlines);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return {};
+    return Object.fromEntries(
+      Object.entries(parsed)
+        .filter((entry): entry is [string, PersonalDeadline] => typeof entry[0] === "string" && isPersonalDeadline(entry[1]))
+        .map(([id, item]) => [id, {
+          date: item.date,
+          reminderDays: item.reminderDays === 1 || item.reminderDays === 3 || item.reminderDays === 7 ? item.reminderDays : null,
+        }])
+    );
+  } catch { return {}; }
+}
+
+export function loadPersonalDeadline(id: string): PersonalDeadline | null {
+  return loadPersonalDeadlines()[id] ?? null;
+}
+
+export function savePersonalDeadline(id: string, deadline: PersonalDeadline): Record<string, PersonalDeadline> {
+  const next = { ...loadPersonalDeadlines(), [id]: deadline };
+  localStorage.setItem(KEYS.deadlines, JSON.stringify(next));
+  window.dispatchEvent(new Event("stipendia:update"));
+  return next;
+}
+
+export function removePersonalDeadline(id: string): Record<string, PersonalDeadline> {
+  const next = { ...loadPersonalDeadlines() };
+  delete next[id];
+  localStorage.setItem(KEYS.deadlines, JSON.stringify(next));
   window.dispatchEvent(new Event("stipendia:update"));
   return next;
 }

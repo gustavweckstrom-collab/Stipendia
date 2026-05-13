@@ -12,7 +12,7 @@ import {
   scholarshipMatchesTravel,
   scholarshipLocationLabel,
 } from "@/lib/scholarshipData";
-import { loadProfile, loadSavedIds, toggleSaved, isApplied, toggleApplied } from "@/lib/storage";
+import { loadPersonalDeadline, loadProfile, loadSavedIds, PersonalDeadline, toggleSaved, isApplied, toggleApplied } from "@/lib/storage";
 import { checkEligibility, eligibilityState } from "@/lib/eligibility";
 import AppScreen from "@/components/layout/AppScreen";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import { useT, useLang } from "@/lib/i18n";
 import { ApplicationStateBadge, EligibilityStateBadge } from "@/components/StatusBadge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { PersonalDeadlineEditor } from "@/components/PersonalDeadline";
 
 export default function ScholarshipDetail() {
   const t = useT();
@@ -33,6 +34,7 @@ export default function ScholarshipDetail() {
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [applied, setAppliedState] = useState(false);
+  const [deadline, setDeadline] = useState<PersonalDeadline | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,6 +42,7 @@ export default function ScholarshipDetail() {
     if (id) {
       setSaved(loadSavedIds().includes(id));
       setAppliedState(isApplied(id));
+      setDeadline(loadPersonalDeadline(id));
       loadScholarshipById(id).then((item) => {
         if (!cancelled) setScholarship(item);
       }).finally(() => {
@@ -233,6 +236,12 @@ export default function ScholarshipDetail() {
             </Button>
           </div>
         </Section>
+
+        {saved && (
+          <Section title={t("deadline.title")}>
+            <PersonalDeadlineEditor scholarshipId={s.id} value={deadline} onChange={setDeadline} />
+          </Section>
+        )}
       </div>
     </AppScreen>
   );

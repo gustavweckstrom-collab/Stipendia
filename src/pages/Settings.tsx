@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import AppScreen from "@/components/layout/AppScreen";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Bell, Languages, Database, Trash2, RotateCcw, Bookmark, Info, Shield } from "lucide-react";
+import { Bell, CalendarDays, Languages, Database, Trash2, RotateCcw, Bookmark, Info, Shield } from "lucide-react";
 import { getLang, setLang, useT, Lang } from "@/lib/i18n";
 import { clearAll, clearProfile } from "@/lib/storage";
 import { toast } from "sonner";
@@ -14,8 +14,8 @@ import {
 
 const NOTIF_KEY = "stipendia.notifs";
 
-interface Notifs { applicationReminders: boolean; savedReminders: boolean; matchUpdates: boolean }
-const defaultNotifs: Notifs = { applicationReminders: true, savedReminders: true, matchUpdates: false };
+interface Notifs { applicationReminders: boolean; savedReminders: boolean; deadlineReminders: boolean; matchUpdates: boolean }
+const defaultNotifs: Notifs = { applicationReminders: true, savedReminders: true, deadlineReminders: true, matchUpdates: false };
 
 function loadNotifs(): Notifs {
   try {
@@ -26,6 +26,7 @@ function loadNotifs(): Notifs {
       ...defaultNotifs,
       ...parsed,
       applicationReminders: parsed.applicationReminders ?? defaultNotifs.applicationReminders,
+      deadlineReminders: parsed.deadlineReminders ?? defaultNotifs.deadlineReminders,
     };
   }
   catch { return defaultNotifs; }
@@ -55,6 +56,9 @@ export default function SettingsPage() {
           </Row>
           <Row icon={Bookmark} label={t("settings.savedReminders")}>
             <Switch checked={notifs.savedReminders} onCheckedChange={(v) => update("savedReminders", v)} />
+          </Row>
+          <Row icon={CalendarDays} label={t("settings.deadlineReminders")}>
+            <Switch checked={notifs.deadlineReminders} onCheckedChange={(v) => update("deadlineReminders", v)} />
           </Row>
           <Row icon={Info} label={t("settings.matchUpdates")} last>
             <Switch checked={notifs.matchUpdates} onCheckedChange={(v) => update("matchUpdates", v)} />
