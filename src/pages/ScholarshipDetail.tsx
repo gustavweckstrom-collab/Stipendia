@@ -103,7 +103,7 @@ export default function ScholarshipDetail() {
           <h2 className="font-bold text-lg mt-0.5 leading-tight">{s.name}</h2>
           <div className="mt-3 flex items-center justify-between gap-2">
             <p className="inline-flex rounded-full border border-primary/15 bg-white px-2.5 py-1 text-xs font-semibold text-primary">{category}</p>
-            {eligState && <EligibilityStateBadge state={eligState} className="text-xs" />}
+            {eligState && <EligibilityStateBadge state={eligState} />}
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-full border border-success/20 bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success">

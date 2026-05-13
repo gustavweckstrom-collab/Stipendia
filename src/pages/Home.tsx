@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { loadProfile, loadSavedIds } from "@/lib/storage";
-import { isProfileComplete, profileCompleteness, StudentProfile } from "@/types/profile";
+import { profileCompleteness, StudentProfile } from "@/types/profile";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +26,7 @@ export default function Home() {
   }, []);
 
   const completeness = profileCompleteness(profile);
-  const complete = isProfileComplete(profile);
+  const hasProfile = Boolean(profile);
 
   return (
     <div className="px-4 pt-6 pb-2 space-y-6">
@@ -38,11 +38,11 @@ export default function Home() {
             <p className="text-[13px] text-muted-foreground mt-3 leading-relaxed">{t("home.intro")}</p>
           </div>
           <ExploreRail />
-          <div className={complete ? "grid grid-cols-2 gap-2" : "grid grid-cols-1 gap-2"}>
+          <div className={hasProfile ? "grid grid-cols-2 gap-2" : "grid grid-cols-1 gap-2"}>
             <Button onClick={() => navigate("/stipendier")} className="rounded-xl h-11">
               {t("home.findCta")}
             </Button>
-            {complete && (
+            {hasProfile && (
               <Button onClick={() => navigate("/matchningar")} variant="outline" className="rounded-xl h-11">
                 {t("home.viewMatches")}
               </Button>
@@ -51,53 +51,33 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="rounded-3xl border border-primary/15 bg-primary-soft/60 p-4 shadow-soft">
-        {complete ? (
-          <>
-            <div className="flex items-center justify-between">
-              <div className="min-w-0">
-                <p className="text-[11px] uppercase tracking-wider text-primary font-semibold">{t("nav.profile")}</p>
-                <p className="font-bold text-lg leading-tight mt-0.5">{t("home.profileReady")}</p>
-                <p className="text-[12px] text-muted-foreground mt-1">{t("home.profileReadyDesc")}</p>
-              </div>
-              <div className="h-12 w-12 rounded-2xl bg-white text-primary flex items-center justify-center shadow-soft shrink-0">
-                <ShieldCheck className="h-6 w-6" />
-              </div>
+      {!profile && (
+        <div className="rounded-3xl border border-primary/15 bg-primary-soft/60 p-4 shadow-soft">
+          <div className="flex items-center justify-between">
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase tracking-wider text-primary font-semibold">{t("nav.profile")}</p>
+              <p className="font-bold text-lg leading-tight mt-0.5">
+                {completeness === 0 ? t("home.startProfile") : t("home.profileProgress", { p: completeness })}
+              </p>
+              <p className="text-[12px] text-muted-foreground mt-1">{t("profile.profileSummary")}</p>
             </div>
-            <div className="mt-3">
-              <Button onClick={() => navigate("/matchningar")} className="w-full rounded-xl font-semibold h-10">
-                {t("home.viewMatches")}
-              </Button>
+            <div className="h-12 w-12 rounded-2xl bg-white text-primary flex items-center justify-center shadow-soft shrink-0">
+              <GraduationCap className="h-6 w-6" />
             </div>
-          </>
-        ) : (
-          <>
-            <div className="flex items-center justify-between">
-              <div className="min-w-0">
-                <p className="text-[11px] uppercase tracking-wider text-primary font-semibold">{t("nav.profile")}</p>
-                <p className="font-bold text-lg leading-tight mt-0.5">
-                  {completeness === 0 ? t("home.startProfile") : t("home.profileProgress", { p: completeness })}
-                </p>
-                <p className="text-[12px] text-muted-foreground mt-1">{t("profile.profileSummary")}</p>
-              </div>
-              <div className="h-12 w-12 rounded-2xl bg-white text-primary flex items-center justify-center shadow-soft shrink-0">
-                <GraduationCap className="h-6 w-6" />
-              </div>
-            </div>
-            <div className="mt-3">
-              <Progress value={Math.max(completeness, 4)} className="h-1.5 bg-white/70" />
-            </div>
-            <div className="mt-3">
-              <Button onClick={() => navigate("/profil?edit=1")} className="w-full rounded-xl font-semibold h-10">
-                {completeness === 0 ? t("home.startProfile") : t("home.continueProfile")}
-              </Button>
-            </div>
-          </>
-        )}
-      </div>
+          </div>
+          <div className="mt-3">
+            <Progress value={Math.max(completeness, 4)} className="h-1.5 bg-white/70" />
+          </div>
+          <div className="mt-3">
+            <Button onClick={() => navigate("/profil?edit=1")} className="w-full rounded-xl font-semibold h-10">
+              {completeness === 0 ? t("home.startProfile") : t("home.continueProfile")}
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Section title={t("home.howItWorks")}>
-        <ol className="space-y-3">
+        <ol className="rounded-3xl border border-border/60 bg-card px-4 py-1 shadow-none">
           <Step n={1} icon={UserPlus} title={t("home.step1.title")} desc={t("home.step1.desc")} />
           <Step n={2} icon={Search} title={t("home.step2.title")} desc={t("home.step2.desc")} />
           <Step n={3} icon={ShieldCheck} title={t("home.step3.title")} desc={t("home.step3.desc")} />
@@ -113,7 +93,7 @@ export default function Home() {
       </div>
 
       <Section title={t("home.why")}>
-        <div className="rounded-3xl border border-border/60 bg-card px-4 py-2 shadow-soft">
+        <div className="rounded-3xl border border-border/50 bg-secondary/30 px-4 py-4 shadow-none">
           <Why icon={Wallet} title={t("home.why1.t")} desc={t("home.why1.d")} />
           <Why icon={Plane} title={t("home.why2.t")} desc={t("home.why2.d")} />
           <Why icon={BookOpen} title={t("home.why3.t")} desc={t("home.why3.d")} />
@@ -146,13 +126,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 function Step({ n, icon: Icon, title, desc }: { n: number; icon: any; title: string; desc: string }) {
   return (
-    <li className="flex items-start gap-3 rounded-2xl border border-border/50 bg-secondary/25 px-3.5 py-3.5">
-      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-card text-xs font-bold text-primary">
+    <li className="flex items-start gap-3 border-b border-border/50 py-3.5 last:border-b-0">
+      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-primary/15 bg-secondary/70 text-xs font-bold text-primary">
         {n}
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4 shrink-0 text-primary/75" />
+          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
           <p className="font-semibold text-sm leading-tight">{title}</p>
         </div>
         <p className="mt-1 text-[12px] text-muted-foreground leading-relaxed">{desc}</p>
@@ -162,13 +142,13 @@ function Step({ n, icon: Icon, title, desc }: { n: number; icon: any; title: str
 }
 function Why({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) {
   return (
-    <div className="flex items-start gap-3 border-b border-border/50 py-3.5 last:border-b-0">
-      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-primary">
-        <Icon className="h-4 w-4" />
+    <div className="flex items-start gap-3 py-2">
+      <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center text-primary/60">
+        <Icon className="h-3.5 w-3.5" strokeWidth={1.8} />
       </span>
       <div className="min-w-0">
-        <p className="font-semibold text-sm">{title}</p>
-        <p className="text-[12px] text-muted-foreground leading-snug">{desc}</p>
+        <p className="text-sm font-semibold leading-snug">{title}</p>
+        <p className="mt-0.5 text-[12px] text-muted-foreground leading-snug">{desc}</p>
       </div>
     </div>
   );
