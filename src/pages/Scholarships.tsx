@@ -11,6 +11,7 @@ import {
   eligibilityHighlights,
   hasDirectApplicationTarget,
   primaryScholarshipCategory,
+  scholarshipAmountLabel,
   scholarshipMatchesEducationLevel,
   scholarshipMatchesStudyAbroad,
   scholarshipMatchesTravel,
@@ -22,7 +23,7 @@ import {
 import AppScreen from "@/components/layout/AppScreen";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Bookmark, BookmarkCheck, CheckCircle2, ChevronRight, ExternalLink, GraduationCap, MapPin, Plane, SlidersHorizontal, Tag, X, SearchX } from "lucide-react";
+import { Search, Bookmark, BookmarkCheck, Building2, CheckCircle2, ChevronRight, ExternalLink, GraduationCap, MapPin, Plane, SlidersHorizontal, Tag, X, SearchX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOptionLabel, useT } from "@/lib/i18n";
 import { Switch } from "@/components/ui/switch";
@@ -162,7 +163,8 @@ function scholarshipResultScore(s: Scholarship, filters: ScholarshipFilters) {
   if (filters.birthPlace && scholarshipMatchesSearchValue(s, filters.birthPlace)) score += 15;
   if (filters.residencePlace && scholarshipMatchesSearchValue(s, filters.residencePlace)) score += 15;
   if ((s.targetGroup ?? []).some((group) => normalizeText(group).includes("student"))) score += 12;
-  if ((s.criteria ?? []).length > 0 || (s.targetGroup ?? []).length > 0) score += 6;
+  if ((s.requirements ?? []).length > 0 || (s.criteria ?? []).length > 0 || (s.targetGroup ?? []).length > 0) score += 6;
+  if (s.enrichment) score += 4;
   if (scholarshipMatchesTravel(s)) score += filters.travelOnly ? 20 : 3;
   if (/(doktorand|forskarutbildning|forskningsprojekt|postdok|professor|gymnasieelev|grundskoleelev|forening|foretag)/i.test(haystack)) score -= 18;
   return score;
@@ -702,6 +704,10 @@ function BrowseCard({
   const state = eligibilityResult ? eligibilityState(eligibilityResult) : null;
   const category = primaryScholarshipCategory(s) ?? t("sch.studentRelevant");
   const location = scholarshipLocationLabel(s);
+  const foundation = s.organization || s.enrichment?.foundation || "";
+  const supportLabel = location || foundation;
+  const SupportIcon = location ? MapPin : Building2;
+  const amountLabel = scholarshipAmountLabel(s);
   const relationHighlights = relationSearchValues.flatMap((value) => scholarshipSearchRelationReasons(s, value));
   const highlights = [...relationHighlights, ...eligibilityHighlights(s)].slice(0, 3);
   const directApplication = hasDirectApplicationTarget(s);
@@ -730,10 +736,16 @@ function BrowseCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h3 className="font-bold text-[16px] leading-snug tracking-tight group-hover:text-primary transition-colors">{s.name}</h3>
-          {location && (
+          {amountLabel && (
+            <p className="mt-2 text-[15px] font-extrabold leading-tight text-success">
+              <span className="text-[13px] font-extrabold text-success">{t("sch.amount")}</span>
+              <span className="ml-1.5">{amountLabel}</span>
+            </p>
+          )}
+          {supportLabel && (
             <p className="mt-1 flex items-center gap-1 text-[13px] text-muted-foreground">
-              <MapPin className="h-3.5 w-3.5 shrink-0 text-primary/75" />
-              <span className="truncate">{location}</span>
+              <SupportIcon className="h-3.5 w-3.5 shrink-0 text-primary/75" />
+              <span className="truncate">{supportLabel}</span>
             </p>
           )}
         </div>
@@ -748,6 +760,7 @@ function BrowseCard({
         {isStudyAbroad && <MetaPill icon={Plane} label={t("sch.studyAbroadBadge")} tone="primary" />}
         {hasGeoConnection && <MetaPill icon={MapPin} label={t("sch.geoBadge")} />}
         <MetaPill icon={GraduationCap} label={t("sch.studentRelevantShort")} tone="success" />
+        {directApplication && <MetaPill icon={ExternalLink} label={t("sch.directLinkShort")} tone="success" />}
         {!directApplication && <MetaPill icon={ExternalLink} label={t("sch.externalSourceShort")} />}
         {saved && <MetaPill icon={BookmarkCheck} label={t("nav.saved")} tone="success" />}
         {applied && <ApplicationStateBadge applied />}

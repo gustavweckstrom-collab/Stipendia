@@ -1,70 +1,82 @@
 {
-  "total": 907,
+  "total": 1014,
   "pageSize": 100,
   "totalOriginalCount": 17487,
   "totalFilteredCount": 907,
   "filterDescription": "Endast stipendier relevanta för universitets- och högskolestudenter",
-  "generatedAt": "2026-05-11T12:15:55.261Z",
+  "generatedAt": "2026-05-21T20:30:22.850Z",
   "generatedFrom": "Alla sveriges stiftelser för studenter.xlsx",
   "chunks": [
     {
-      "file": "scholarships-001.json",
+      "file": "scholarships-enrichment-001.json",
       "start": 1,
       "end": 100,
       "count": 100
     },
     {
-      "file": "scholarships-002.json",
+      "file": "scholarships-enrichment-002.json",
       "start": 101,
-      "end": 200,
+      "end": 107,
+      "count": 7
+    },
+    {
+      "file": "scholarships-001.json",
+      "start": 108,
+      "end": 207,
+      "count": 100
+    },
+    {
+      "file": "scholarships-002.json",
+      "start": 208,
+      "end": 307,
       "count": 100
     },
     {
       "file": "scholarships-003.json",
-      "start": 201,
-      "end": 300,
+      "start": 308,
+      "end": 407,
       "count": 100
     },
     {
       "file": "scholarships-004.json",
-      "start": 301,
-      "end": 400,
+      "start": 408,
+      "end": 507,
       "count": 100
     },
     {
       "file": "scholarships-005.json",
-      "start": 401,
-      "end": 500,
+      "start": 508,
+      "end": 607,
       "count": 100
     },
     {
       "file": "scholarships-006.json",
-      "start": 501,
-      "end": 600,
+      "start": 608,
+      "end": 707,
       "count": 100
     },
     {
       "file": "scholarships-007.json",
-      "start": 601,
-      "end": 700,
+      "start": 708,
+      "end": 807,
       "count": 100
     },
     {
       "file": "scholarships-008.json",
-      "start": 701,
-      "end": 800,
+      "start": 808,
+      "end": 907,
       "count": 100
     },
     {
       "file": "scholarships-009.json",
-      "start": 801,
-      "end": 900,
+      "start": 908,
+      "end": 1007,
       "count": 100
     },
     {
       "file": "scholarships-010.json",
-      "start": 901,
-      "end": 907,
+      "start": 1008,
+      "end": 1014,
       "count": 7
     }
   ],
@@ -82,8 +94,41 @@
   ],
   "fieldChunks": {
     "Ekonomi / Handel": {
-      "count": 81,
+      "count": 168,
       "chunks": [
+        "scholarships-enrichment-001.json",
+        "scholarships-001.json",
+        "scholarships-002.json",
+        "scholarships-003.json",
+        "scholarships-004.json",
+        "scholarships-005.json",
+        "scholarships-006.json",
+        "scholarships-007.json",
+        "scholarships-008.json",
+        "scholarships-009.json"
+      ]
+    },
+    "Teknik / Ingenjörsvetenskap": {
+      "count": 234,
+      "chunks": [
+        "scholarships-enrichment-001.json",
+        "scholarships-enrichment-002.json",
+        "scholarships-001.json",
+        "scholarships-002.json",
+        "scholarships-003.json",
+        "scholarships-004.json",
+        "scholarships-005.json",
+        "scholarships-006.json",
+        "scholarships-007.json",
+        "scholarships-008.json",
+        "scholarships-009.json",
+        "scholarships-010.json"
+      ]
+    },
+    "Naturvetenskap": {
+      "count": 100,
+      "chunks": [
+        "scholarships-enrichment-001.json",
         "scholarships-001.json",
         "scholarships-002.json",
         "scholarships-003.json",
@@ -96,48 +141,10 @@
       ]
     },
     "Humaniora / Språk": {
-      "count": 129,
+      "count": 270,
       "chunks": [
-        "scholarships-001.json",
-        "scholarships-002.json",
-        "scholarships-003.json",
-        "scholarships-004.json",
-        "scholarships-005.json",
-        "scholarships-006.json",
-        "scholarships-007.json",
-        "scholarships-008.json",
-        "scholarships-009.json"
-      ]
-    },
-    "Juridik": {
-      "count": 9,
-      "chunks": [
-        "scholarships-001.json",
-        "scholarships-004.json",
-        "scholarships-005.json",
-        "scholarships-007.json",
-        "scholarships-008.json",
-        "scholarships-009.json"
-      ]
-    },
-    "Konst / Kultur / Design": {
-      "count": 139,
-      "chunks": [
-        "scholarships-001.json",
-        "scholarships-002.json",
-        "scholarships-003.json",
-        "scholarships-004.json",
-        "scholarships-005.json",
-        "scholarships-006.json",
-        "scholarships-007.json",
-        "scholarships-008.json",
-        "scholarships-009.json",
-        "scholarships-010.json"
-      ]
-    },
-    "Lantbruk / Miljö": {
-      "count": 48,
-      "chunks": [
+        "scholarships-enrichment-001.json",
+        "scholarships-enrichment-002.json",
         "scholarships-001.json",
         "scholarships-002.json",
         "scholarships-003.json",
@@ -150,7 +157,23 @@
       ]
     },
     "Medicin / Vård": {
-      "count": 75,
+      "count": 160,
+      "chunks": [
+        "scholarships-enrichment-001.json",
+        "scholarships-enrichment-002.json",
+        "scholarships-001.json",
+        "scholarships-002.json",
+        "scholarships-003.json",
+        "scholarships-004.json",
+        "scholarships-005.json",
+        "scholarships-006.json",
+        "scholarships-007.json",
+        "scholarships-008.json",
+        "scholarships-009.json"
+      ]
+    },
+    "Lantbruk / Miljö": {
+      "count": 96,
       "chunks": [
         "scholarships-001.json",
         "scholarships-002.json",
@@ -163,46 +186,8 @@
         "scholarships-009.json"
       ]
     },
-    "Naturvetenskap": {
-      "count": 42,
-      "chunks": [
-        "scholarships-001.json",
-        "scholarships-002.json",
-        "scholarships-003.json",
-        "scholarships-004.json",
-        "scholarships-005.json",
-        "scholarships-006.json",
-        "scholarships-007.json",
-        "scholarships-008.json",
-        "scholarships-009.json"
-      ]
-    },
-    "Pedagogik / Lärarutbildning": {
-      "count": 12,
-      "chunks": [
-        "scholarships-001.json",
-        "scholarships-003.json",
-        "scholarships-004.json",
-        "scholarships-005.json",
-        "scholarships-006.json",
-        "scholarships-007.json",
-        "scholarships-008.json",
-        "scholarships-009.json"
-      ]
-    },
-    "Samhällsvetenskap": {
-      "count": 6,
-      "chunks": [
-        "scholarships-001.json",
-        "scholarships-002.json",
-        "scholarships-003.json",
-        "scholarships-006.json",
-        "scholarships-007.json",
-        "scholarships-009.json"
-      ]
-    },
-    "Teknik / Ingenjörsvetenskap": {
-      "count": 90,
+    "Konst / Kultur / Design": {
+      "count": 278,
       "chunks": [
         "scholarships-001.json",
         "scholarships-002.json",
@@ -214,6 +199,41 @@
         "scholarships-008.json",
         "scholarships-009.json",
         "scholarships-010.json"
+      ]
+    },
+    "Juridik": {
+      "count": 18,
+      "chunks": [
+        "scholarships-001.json",
+        "scholarships-004.json",
+        "scholarships-005.json",
+        "scholarships-007.json",
+        "scholarships-008.json",
+        "scholarships-009.json"
+      ]
+    },
+    "Samhällsvetenskap": {
+      "count": 12,
+      "chunks": [
+        "scholarships-001.json",
+        "scholarships-002.json",
+        "scholarships-003.json",
+        "scholarships-006.json",
+        "scholarships-007.json",
+        "scholarships-009.json"
+      ]
+    },
+    "Pedagogik / Lärarutbildning": {
+      "count": 24,
+      "chunks": [
+        "scholarships-001.json",
+        "scholarships-003.json",
+        "scholarships-004.json",
+        "scholarships-005.json",
+        "scholarships-006.json",
+        "scholarships-007.json",
+        "scholarships-008.json",
+        "scholarships-009.json"
       ]
     }
   },
@@ -339,6 +359,113 @@
     "Östersund"
   ],
   "idToChunk": {
+    "enrichment-crafoordska-resestipendium-for-kortare-utlandsvistelser": "scholarships-enrichment-001.json",
+    "enrichment-crafoordska-resestipendium-for-langre-utlandsvistelser": "scholarships-enrichment-001.json",
+    "enrichment-adlerbertska": "scholarships-enrichment-001.json",
+    "enrichment-adlerbertska-hospitiestiftelsen": "scholarships-enrichment-001.json",
+    "enrichment-evensonska": "scholarships-enrichment-001.json",
+    "enrichment-goteborgs-universitets-studentfond": "scholarships-enrichment-001.json",
+    "enrichment-studenternas-hus-donationen": "scholarships-enrichment-001.json",
+    "enrichment-gunnar-svedbergs-pris": "scholarships-enrichment-001.json",
+    "enrichment-donationsnamndens-studiestipendium": "scholarships-enrichment-001.json",
+    "enrichment-henrik-e-ahrenbergs-studiefond": "scholarships-enrichment-001.json",
+    "enrichment-udda-bidrag-ur-berghaus": "scholarships-enrichment-001.json",
+    "enrichment-adlerbertska-2": "scholarships-enrichment-001.json",
+    "enrichment-donationsstipendierna": "scholarships-enrichment-001.json",
+    "enrichment-carl-alfred-creutz-testamentmedel": "scholarships-enrichment-001.json",
+    "enrichment-kungliga-och-hvitfeldtska-universitets-och-hogskolestipendium": "scholarships-enrichment-001.json",
+    "enrichment-kungliga-och-hvitfeldtska-forskningsresor": "scholarships-enrichment-001.json",
+    "enrichment-sveriges-ingenjorers-miljofond": "scholarships-enrichment-001.json",
+    "enrichment-the-global-mentorship-program": "scholarships-enrichment-001.json",
+    "enrichment-bernt-gustavssons": "scholarships-enrichment-001.json",
+    "enrichment-c-a-adelskolds-resestipendiefond": "scholarships-enrichment-001.json",
+    "enrichment-claes-adolf-adelskolds-resestipendiefond": "scholarships-enrichment-001.json",
+    "enrichment-edith-och-egon-plomgrens-donationsfond": "scholarships-enrichment-001.json",
+    "enrichment-ernst-m-frimans": "scholarships-enrichment-001.json",
+    "enrichment-gigabs": "scholarships-enrichment-001.json",
+    "enrichment-goran-wallbergs-minnesfond": "scholarships-enrichment-001.json",
+    "enrichment-harald-orvarsons-minnesfond": "scholarships-enrichment-001.json",
+    "enrichment-k-g-hallbys": "scholarships-enrichment-001.json",
+    "enrichment-knut-e-petterssons-donation": "scholarships-enrichment-001.json",
+    "enrichment-minor-field-studies-for-faltstudier": "scholarships-enrichment-001.json",
+    "enrichment-nils-rud-olsons-minnesfond": "scholarships-enrichment-001.json",
+    "enrichment-plasmafysikfonden": "scholarships-enrichment-001.json",
+    "enrichment-barbro-osher-endowment": "scholarships-enrichment-001.json",
+    "enrichment-folke-och-marianne-edlers-forskningsfond-maligna-sjukdomar": "scholarships-enrichment-001.json",
+    "enrichment-a-h-lindfors": "scholarships-enrichment-001.json",
+    "enrichment-hugo-heymans-forskningsfond-m2": "scholarships-enrichment-001.json",
+    "enrichment-rolf-sormans-m2": "scholarships-enrichment-001.json",
+    "enrichment-rune-berhardsson-s-graphene-fund": "scholarships-enrichment-001.json",
+    "enrichment-wernstedtska-resestipendiet": "scholarships-enrichment-001.json",
+    "enrichment-ake-backmans-resestipendium": "scholarships-enrichment-001.json",
+    "enrichment-a-h-lindfors-2": "scholarships-enrichment-001.json",
+    "enrichment-a-h-lindfors-3": "scholarships-enrichment-001.json",
+    "enrichment-helsingborgs-fartygsbefalhavare-sallskap": "scholarships-enrichment-001.json",
+    "enrichment-rolf-sormans": "scholarships-enrichment-001.json",
+    "enrichment-sjokapten-e-n-e-sundstroms": "scholarships-enrichment-001.json",
+    "enrichment-1942-ars-tidigare-skanestipendiet": "scholarships-enrichment-001.json",
+    "enrichment-individuellt-for-okade-omkostnader-for-dubbelt-boende": "scholarships-enrichment-001.json",
+    "enrichment-for-studenter-med-forsorjningsplikt-av-barn-under-18-ar": "scholarships-enrichment-001.json",
+    "enrichment-for-examensarbete": "scholarships-enrichment-001.json",
+    "enrichment-sydsvenska-navigationsstiftelsen": "scholarships-enrichment-001.json",
+    "enrichment-adam-hillbergs-minnesfond": "scholarships-enrichment-001.json",
+    "enrichment-britt-lisa-landahls": "scholarships-enrichment-001.json",
+    "enrichment-ernst-m-frimans-2": "scholarships-enrichment-001.json",
+    "enrichment-nils-rud-olson-minnesfond": "scholarships-enrichment-001.json",
+    "enrichment-sven-steens-forsknings-och": "scholarships-enrichment-001.json",
+    "enrichment-wernstedtska-resestipendiet-2": "scholarships-enrichment-001.json",
+    "enrichment-ake-backmans-resestipendium-2": "scholarships-enrichment-001.json",
+    "enrichment-alfred-ots": "scholarships-enrichment-001.json",
+    "enrichment-studenternas-hus-donationen-2": "scholarships-enrichment-001.json",
+    "enrichment-gerhard-hobohms-minnesfond": "scholarships-enrichment-001.json",
+    "enrichment-torsten-janssons": "scholarships-enrichment-001.json",
+    "enrichment-anders-walls": "scholarships-enrichment-001.json",
+    "enrichment-jubileumsstipendium": "scholarships-enrichment-001.json",
+    "enrichment-eksta-energistipendium": "scholarships-enrichment-001.json",
+    "enrichment-eksta-energistipendium-2": "scholarships-enrichment-001.json",
+    "enrichment-gustaf-b-thordens": "scholarships-enrichment-001.json",
+    "enrichment-chester-carlsons-forskningspris": "scholarships-enrichment-001.json",
+    "enrichment-hans-werthenfonden": "scholarships-enrichment-001.json",
+    "enrichment-ivas-lararpris-i-teknik": "scholarships-enrichment-001.json",
+    "enrichment-john-och-margaretha-aspegrens": "scholarships-enrichment-001.json",
+    "enrichment-fran-konung-carl-xvi-gustafs-50-arsfond-for-vetenskap-teknik-och-miljo": "scholarships-enrichment-001.json",
+    "enrichment-lumells-uppsatsstipendium": "scholarships-enrichment-001.json",
+    "enrichment-medisera-2026": "scholarships-enrichment-001.json",
+    "enrichment-promisepriset": "scholarships-enrichment-001.json",
+    "enrichment-for-undervisning-och-utbildning-till-sjobefal": "scholarships-enrichment-001.json",
+    "enrichment-2026-scholarship": "scholarships-enrichment-001.json",
+    "enrichment-2025-scholarship-ida-asljung": "scholarships-enrichment-001.json",
+    "enrichment-2024-scholarship-erik-rydow": "scholarships-enrichment-001.json",
+    "enrichment-2023-scholarship-oliver-belfiore": "scholarships-enrichment-001.json",
+    "enrichment-2022-scholarship-eleonora-svanberg": "scholarships-enrichment-001.json",
+    "enrichment-2021-scholarships-matilda-mahlberg-philip-winchester": "scholarships-enrichment-001.json",
+    "enrichment-2020-scholarship": "scholarships-enrichment-001.json",
+    "enrichment-2019-20-scholarship": "scholarships-enrichment-001.json",
+    "enrichment-2018-scholarship": "scholarships-enrichment-001.json",
+    "enrichment-valle-scholarship-och-scandinavian-exchange-program": "scholarships-enrichment-001.json",
+    "enrichment-vok": "scholarships-enrichment-001.json",
+    "enrichment-gratis-deltagande-i-vok-s-konferenser": "scholarships-enrichment-001.json",
+    "enrichment-kreditkolls": "scholarships-enrichment-001.json",
+    "enrichment-brixos": "scholarships-enrichment-001.json",
+    "enrichment-svensk-batutbildnings": "scholarships-enrichment-001.json",
+    "enrichment-konferens": "scholarships-enrichment-001.json",
+    "enrichment-studieresa": "scholarships-enrichment-001.json",
+    "enrichment-studier-och-kurser-specialistsjukskoterskeexamen": "scholarships-enrichment-001.json",
+    "enrichment-studier-och-kurser-kursbelopp": "scholarships-enrichment-001.json",
+    "enrichment-sprakgranskning-infor-publicering-etikansokan": "scholarships-enrichment-001.json",
+    "enrichment-professionell-utveckling": "scholarships-enrichment-001.json",
+    "enrichment-klinisk-forskning-och-utvecklingsarbete-inom-omvardnad": "scholarships-enrichment-001.json",
+    "enrichment-doktorand": "scholarships-enrichment-001.json",
+    "enrichment-postdoc": "scholarships-enrichment-001.json",
+    "enrichment-seniorstipendium": "scholarships-enrichment-001.json",
+    "enrichment-seniorstipendier": "scholarships-enrichment-001.json",
+    "enrichment-helgepriset-ett-lararstipendium": "scholarships-enrichment-002.json",
+    "enrichment-anna-whitlocks-minnesfond-gymnasiestipendium": "scholarships-enrichment-002.json",
+    "enrichment-anna-whitlocks-minnesfond-postgymnasiala-studier-utomlands": "scholarships-enrichment-002.json",
+    "enrichment-anna-whitlocks-minnesfond-masterstudier-utomlands": "scholarships-enrichment-002.json",
+    "enrichment-irisstipendiet": "scholarships-enrichment-002.json",
+    "enrichment-pause": "scholarships-enrichment-002.json",
+    "enrichment-fruntimmerssamfundet-i-visby": "scholarships-enrichment-002.json",
     "foundation-1000343": "scholarships-001.json",
     "foundation-1001026": "scholarships-001.json",
     "foundation-1001684": "scholarships-001.json",

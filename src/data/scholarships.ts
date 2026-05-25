@@ -22,6 +22,7 @@ export interface Scholarship {
   educationLevel: string | null;
   fieldOfStudy: string[];
   amount: number | null;
+  amountText?: string | null;
   deadline: string | null;
   applicationUrl: string | null;
   sourceUrl?: string | null;
@@ -37,6 +38,35 @@ export interface Scholarship {
   purposes?: string[];
   needBased?: boolean;
   engagementRequired?: boolean;
+  enrichment?: ScholarshipEnrichmentMatch | null;
+}
+
+export interface ScholarshipEnrichment {
+  name: string;
+  foundation: string | null;
+  amount: number | null;
+  amountText?: string | null;
+  requirements: string | null;
+  deadline: string | null;
+  url: string | null;
+  nameKey: string;
+  foundationKey: string | null;
+}
+
+export interface ScholarshipEnrichmentMatch {
+  source: "csv";
+  matchedBy: "name" | "foundation" | "url";
+  name: string;
+  foundation: string | null;
+  url: string | null;
+}
+
+export interface ScholarshipEnrichmentFile {
+  generatedAt: string;
+  sourceFile: string | null;
+  count: number;
+  description: string;
+  items: ScholarshipEnrichment[];
 }
 
 export interface ScholarshipChunkInfo {

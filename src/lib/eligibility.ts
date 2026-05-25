@@ -7,7 +7,7 @@ import { normalizeText, scholarshipMatchesEducationLevel, scholarshipMatchesSear
 const norm = (s: string) => normalizeText(s);
 const hasOverlap = (val: string, list: string[]) =>
   list.some((l) => norm(val).includes(norm(l)) || norm(l).includes(norm(val)));
-const criteriaText = (s: Scholarship) => norm([s.description, ...(s.criteria ?? []), ...(s.targetGroup ?? []), ...(s.tags ?? [])].join(" "));
+const criteriaText = (s: Scholarship) => norm([s.description, ...(s.requirements ?? []), ...(s.criteria ?? []), ...(s.targetGroup ?? []), ...(s.tags ?? [])].join(" "));
 const hasAny = (text: string, words: string[]) => words.some((word) => text.includes(norm(word)));
 const hasEconomicNeed = (profile: StudentProfile) => {
   const economy = norm(profile.ekonomi);
@@ -143,7 +143,7 @@ export function checkEligibility(profile: StudentProfile, s: Scholarship): Eligi
 export function scholarshipTypes(s: Scholarship): ScholarshipType[] {
   const set = new Set<ScholarshipType>();
   const purposes = (s.purposes ?? []).map((p) => p.toLowerCase());
-  const text = (s.description + " " + (s.tags ?? []).join(" ") + " " + (s.fieldOfStudy ?? []).join(" ")).toLowerCase();
+  const text = (s.description + " " + (s.requirements ?? []).join(" ") + " " + (s.tags ?? []).join(" ") + " " + (s.fieldOfStudy ?? []).join(" ")).toLowerCase();
   const has = (k: string) => purposes.some((p) => p.includes(k)) || text.includes(k);
   if (has("utbyte") || has("utlands") || has("resor")) set.add("Utlandsstudier");
   if (has("examensarbete") || has("uppsats")) set.add("Examensarbete");

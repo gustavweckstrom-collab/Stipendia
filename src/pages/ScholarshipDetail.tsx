@@ -8,6 +8,7 @@ import {
   hasDirectApplicationTarget,
   loadScholarshipById,
   primaryScholarshipCategory,
+  scholarshipAmountLabel,
   scholarshipMatchesStudyAbroad,
   scholarshipMatchesTravel,
   scholarshipLocationLabel,
@@ -16,7 +17,7 @@ import { loadPersonalDeadline, loadProfile, loadSavedIds, PersonalDeadline, togg
 import { checkEligibility, eligibilityState } from "@/lib/eligibility";
 import AppScreen from "@/components/layout/AppScreen";
 import { Button } from "@/components/ui/button";
-import { Building2, ExternalLink, CheckCircle2, AlertCircle, Bookmark, BookmarkCheck, Check, Info, Tag, GraduationCap, Plane, MapPin } from "lucide-react";
+import { Building2, ExternalLink, CheckCircle2, AlertCircle, Bookmark, BookmarkCheck, Check, Info, Tag, GraduationCap, Plane, MapPin, CalendarDays, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useT, useLang } from "@/lib/i18n";
 import { ApplicationStateBadge, EligibilityStateBadge } from "@/components/StatusBadge";
@@ -66,7 +67,9 @@ export default function ScholarshipDetail() {
   const elig = profile ? checkEligibility(profile, s) : null;
   const eligState = elig ? eligibilityState(elig) : null;
   const category = translateTag(primaryScholarshipCategory(s) ?? t("sch.studentRelevant"));
-  const place = scholarshipLocationLabel(s) || s.organization || t("common.missing");
+  const place = scholarshipLocationLabel(s);
+  const foundation = s.organization || s.enrichment?.foundation || t("common.missing");
+  const eyebrow = place || foundation;
   const requirementTexts = distinctEligibilityRequirements(s);
   const eligibilityPoints = eligibilityHighlights(s);
   const directApplication = hasDirectApplicationTarget(s);
@@ -74,6 +77,7 @@ export default function ScholarshipDetail() {
   const isStudyAbroad = scholarshipMatchesStudyAbroad(s);
   const hasGeoConnection = eligibilityPoints.some((point) => point.toLowerCase().includes("ort") || point.toLowerCase().includes("region") || point.toLowerCase().includes("local"));
   const description = lang == "en" && s.descriptionEn ? s.descriptionEn : (s.description || t("common.missing"));
+  const amountLabel = scholarshipAmountLabel(s);
 
   return (
     <AppScreen
@@ -102,7 +106,7 @@ export default function ScholarshipDetail() {
             applied && "border-success/50 bg-success-soft/75"
           )}
         >
-          <p className="text-[11px] text-primary flex items-center gap-1 font-semibold"><Building2 className="h-3 w-3" /> {place}</p>
+          <p className="text-[11px] text-primary flex items-center gap-1 font-semibold"><Building2 className="h-3 w-3" /> {eyebrow}</p>
           <h2 className="font-bold text-lg mt-0.5 leading-tight">{s.name}</h2>
           <div className="mt-3 flex items-center justify-between gap-2">
             <p className="inline-flex rounded-full border border-primary/15 bg-white px-2.5 py-1 text-xs font-semibold text-primary">{category}</p>
@@ -115,6 +119,11 @@ export default function ScholarshipDetail() {
             {!directApplication && (
               <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
                 <ExternalLink className="h-3.5 w-3.5" /> {t("sch.externalSourceShort")}
+              </span>
+            )}
+            {directApplication && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-success/20 bg-success-soft px-2.5 py-1 text-[11px] font-semibold text-success">
+                <ExternalLink className="h-3.5 w-3.5" /> {t("sch.directLinkShort")}
               </span>
             )}
             {isTravel && (
@@ -146,8 +155,11 @@ export default function ScholarshipDetail() {
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <InfoTile icon={Building2} label={t("sch.location")} value={place} />
+          {place && <InfoTile icon={MapPin} label={t("sch.location")} value={place} />}
+          <InfoTile icon={Building2} label={t("sch.foundation")} value={foundation} />
           <InfoTile icon={Tag} label={t("sch.category")} value={category} />
+          {s.deadline && <InfoTile icon={CalendarDays} label={t("sch.officialDeadline")} value={s.deadline} />}
+          {amountLabel && <InfoTile icon={Wallet} label={t("sch.amount")} value={amountLabel} />}
         </div>
 
         {(s.tags ?? []).length > 0 && (
@@ -255,6 +267,7 @@ function InfoTile({ icon: Icon, label, value }: { icon: any; label: string; valu
     </div>
   );
 }
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="rounded-3xl border border-border/60 bg-card p-4">

@@ -1,5 +1,6 @@
 import { Scholarship, ScholarshipIndex } from "@/data/scholarships";
 import { getLang } from "@/lib/i18n";
+import { enrichScholarships } from "@/lib/scholarshipEnrichment";
 
 const DATA_ROOT = `${import.meta.env.BASE_URL}data/scholarships/`;
 
@@ -18,7 +19,7 @@ export function loadScholarshipIndex(): Promise<ScholarshipIndex> {
 }
 
 export function loadScholarshipChunk(file: string): Promise<Scholarship[]> {
-  if (!chunkCache.has(file)) chunkCache.set(file, fetchJson<Scholarship[]>(file));
+  if (!chunkCache.has(file)) chunkCache.set(file, fetchJson<Scholarship[]>(file).then(enrichScholarships));
   return chunkCache.get(file)!;
 }
 
@@ -205,11 +206,16 @@ export function scholarshipSearchRelationReasons(scholarship: Scholarship, value
   const normalized = normalizeText(value);
   if (!normalized) return [];
   const haystack = scholarshipSearchHaystack(scholarship);
+  const requirementsHaystack = normalizeText((scholarship.requirements ?? []).join(" "));
   const en = getLang() === "en";
   const reasons: string[] = [];
   for (const relation of GEOGRAPHIC_SEARCH_RELATIONS) {
     const base = normalizeText(relation.base);
     if (!textMatchesSearchTerm(normalized, base)) continue;
+    if (textMatchesSearchTerm(requirementsHaystack, base)) {
+      reasons.push(en ? `The requirements mention ${relation.base}.` : `Kravtexten nämner ${relation.base}.`);
+      continue;
+    }
     if (textMatchesSearchTerm(haystack, base)) {
       reasons.push(en ? `The scholarship description mentions ${relation.base}.` : `Beskrivningen av stipendiet nämner ${relation.base}.`);
       continue;
@@ -256,6 +262,14 @@ export function formatPlaceLabel(value: string | null | undefined): string | nul
 
 export function scholarshipLocationLabel(scholarship: Scholarship): string | null {
   return formatPlaceLabel(scholarship.location || scholarship.source?.city || null);
+}
+
+export function scholarshipAmountLabel(scholarship: Scholarship): string | null {
+  if (scholarship.amountText) return scholarship.amountText;
+  if (typeof scholarship.amount === "number" && Number.isFinite(scholarship.amount)) {
+    return `${new Intl.NumberFormat("sv-SE").format(scholarship.amount)} kr`;
+  }
+  return null;
 }
 
 function isLocationLike(candidate: string, scholarship: Scholarship): boolean {
@@ -327,6 +341,7 @@ export function eligibilityHighlights(scholarship: Scholarship): string[] {
   const text = normalizeText([
     scholarship.name,
     scholarship.description,
+    ...(scholarship.requirements ?? []),
     ...(scholarship.criteria ?? []),
     ...(scholarship.targetGroup ?? []),
     ...(scholarship.tags ?? []),
@@ -374,6 +389,7 @@ export function scholarshipMatchesTravel(scholarship: Scholarship): boolean {
   const text = normalizeText([
     scholarship.name,
     scholarship.description,
+    ...(scholarship.requirements ?? []),
     ...(scholarship.criteria ?? []),
     ...(scholarship.tags ?? []),
     ...(scholarship.purposes ?? []),
@@ -397,6 +413,7 @@ export function scholarshipMatchesStudyAbroad(scholarship: Scholarship): boolean
   const text = normalizeText([
     scholarship.name,
     scholarship.description,
+    ...(scholarship.requirements ?? []),
     ...(scholarship.criteria ?? []),
     ...(scholarship.tags ?? []),
     ...(scholarship.purposes ?? []),
@@ -413,6 +430,9 @@ export function scholarshipSearchFields(scholarship: Scholarship): string[] {
     scholarship.organization,
     scholarship.description,
     scholarship.descriptionEn ?? "",
+    scholarship.amountText ?? "",
+    scholarship.deadline ?? "",
+    scholarship.applicationUrl ?? "",
     scholarship.location ?? "",
     scholarship.source?.city ?? "",
     scholarship.source?.address ?? "",
@@ -435,6 +455,7 @@ export function scholarshipMatchesEducationLevel(scholarship: Scholarship, level
     scholarship.educationLevel,
     scholarship.name,
     scholarship.description,
+    ...(scholarship.requirements ?? []),
     ...(scholarship.criteria ?? []),
     ...(scholarship.tags ?? []),
   ].join(" "));
